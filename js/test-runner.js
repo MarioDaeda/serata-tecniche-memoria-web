@@ -40,6 +40,25 @@ function escapeHtml(str) {
     .replace(/'/g, "&#39;");
 }
 
+function createSubmissionId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 function formatNumberIt(num) {
   const n = Number(num) || 0;
   return Number.isInteger(n) ? String(n) : String(n).replace(".", ",");
@@ -432,7 +451,7 @@ function renderOnboarding() {
       <div class="meta-chips">
         <span class="chip chip-primary">Serata ${escapeHtml(session)}</span>
         <span class="chip">Test ${escapeHtml(test)}</span>
-        <span class="chip">Round ${round}</span>
+        <span class="chip">Prova ${round}</span>
         ${modeBadge}
         ${syncBadge}
       </div>
@@ -1001,6 +1020,7 @@ function wireChemistryRecall(section, answers) {
 
     const strokes = [];
     let activeStroke = null;
+    let baseImg = null;
     let canvasCtx = null;
     let logicalW = 320;
     let logicalH = 220;
@@ -1009,6 +1029,9 @@ function wireChemistryRecall(section, answers) {
       if (!canvasCtx) return;
       canvasCtx.fillStyle = "#ffffff";
       canvasCtx.fillRect(0, 0, logicalW, logicalH);
+      if (baseImg) {
+        canvasCtx.drawImage(baseImg, 0, 0, logicalW, logicalH);
+      }
       canvasCtx.strokeStyle = "#182230";
       canvasCtx.lineWidth = 2.6;
       canvasCtx.lineCap = "round";
@@ -1027,7 +1050,7 @@ function wireChemistryRecall(section, answers) {
         canvasCtx.stroke();
       }
       if (canvas) {
-        canvas.dataset.hasInk = strokes.length > 0 ? "true" : "false";
+        canvas.dataset.hasInk = strokes.length > 0 || Boolean(baseImg) ? "true" : "false";
       }
     };
 
@@ -1042,6 +1065,16 @@ function wireChemistryRecall(section, answers) {
       if (canvasCtx) {
         canvasCtx.scale(dpr, dpr);
         redrawCanvas();
+      }
+
+      if (answers.drawingDataUrl) {
+        const savedUrl = answers.drawingDataUrl;
+        const img = new Image();
+        img.onload = () => {
+          baseImg = img;
+          redrawCanvas();
+        };
+        img.src = savedUrl;
       }
 
       const getPos = (e) => {
@@ -1068,7 +1101,10 @@ function wireChemistryRecall(section, answers) {
       });
 
       const endStroke = () => {
+        if (!activeStroke) return;
         activeStroke = null;
+        captureChemCanvasSnapshot(section);
+        persistAttempt();
       };
       canvas.addEventListener("pointerup", endStroke);
       canvas.addEventListener("pointercancel", endStroke);
@@ -1077,9 +1113,16 @@ function wireChemistryRecall(section, answers) {
     undoBtn?.addEventListener("click", () => {
       strokes.pop();
       redrawCanvas();
+      if (canvas && canvas.dataset.hasInk === "true") {
+        captureChemCanvasSnapshot(section);
+      } else {
+        answers.drawingDataUrl = "";
+      }
+      persistAttempt();
     });
 
     clearBtn?.addEventListener("click", () => {
+      baseImg = null;
       strokes.length = 0;
       answers.drawingDataUrl = "";
       redrawCanvas();
@@ -1438,7 +1481,7 @@ function renderDatesRecall(section, answers) {
               type="text"
               inputmode="numeric"
               pattern="[0-9]*"
-              maxlength="4"
+              maxlength="8"
               autocomplete="off"
               placeholder="AAAA"
               value="${escapeHtml(entry.year || "")}"
@@ -1580,8 +1623,12 @@ function buildPayload(scoreResult, completedAt) {
   const { session, test, round, mode, attempt } = ctx;
   const startedAt = attempt.testStartedAt || completedAt;
   const durationSeconds = Math.max(0, Math.round((completedAt - startedAt) / 1000));
+  if (!attempt.submissionId) {
+    attempt.submissionId = createSubmissionId();
+  }
 
   return {
+    id: attempt.submissionId,
     session_code: session,
     test_id: test,
     round_num: round,
@@ -1750,11 +1797,11 @@ function finalizeAttempt() {
     completed_at: new Date(completedAt).toISOString()
   });
 
-  if (!attempt.submission || attempt.submission.status !== "sent") {
+  if (!attempt.submission || (attempt.submission.status !== "sent" && attempt.submission.status !== "queued")) {
     attempt.submission = {
       status: "sending",
       mode: isDemoMode() ? "local" : "neon",
-      resultId: null,
+      resultId: attempt.submissionId || null,
       queued: false,
       payload,
       scoreResult
@@ -1767,6 +1814,9 @@ function finalizeAttempt() {
     attempt.submission.scoreResult = scoreResult;
     persistAttempt();
     renderCompletedView(scoreResult);
+    if (attempt.submission.status === "queued") {
+      retrySubmission();
+    }
   }
 }
 
@@ -1849,7 +1899,7 @@ function renderCompletedView(scoreResult) {
         return `
           <div class="progression-item ${isCurrent ? "current" : ""}">
             <div>
-              <strong>Round ${escapeHtml(entry.round_num)}</strong>
+              <strong>Prova ${escapeHtml(entry.round_num)}</strong>
               <span class="helper-text"> · Test ${escapeHtml(entry.test_id)}</span>
             </div>
             <div>
@@ -1884,7 +1934,7 @@ function renderCompletedView(scoreResult) {
     <section class="card score-hero">
       <div class="meta-chips" style="justify-content: center;">
         <span class="chip chip-primary">Serata ${escapeHtml(session)}</span>
-        <span class="chip">Test ${escapeHtml(test)} · Round ${round}</span>
+        <span class="chip">Test ${escapeHtml(test)} · Prova ${round}</span>
         ${catLabel ? `<span class="chip">${escapeHtml(catLabel)}</span>` : ""}
         ${nick ? `<span class="chip">${escapeHtml(nick)}</span>` : ""}
       </div>
@@ -2028,6 +2078,7 @@ async function initApp() {
   if (!attempt) {
     attempt = {
       attemptKey,
+      submissionId: createSubmissionId(),
       session,
       test,
       round,
@@ -2047,6 +2098,9 @@ async function initApp() {
       submission: null
     };
   } else {
+    if (!attempt.submissionId) {
+      attempt.submissionId = attempt.submission?.payload?.id || createSubmissionId();
+    }
     if (!attempt.participant || !attempt.participant.participant_id) {
       attempt.participant = {
         participant_id: profile.participant_id,

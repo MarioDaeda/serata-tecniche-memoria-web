@@ -73,17 +73,17 @@ function normalizePayload(payload) {
     nickname: String(payload?.nickname || "").trim(),
     category: String(payload?.category || "nessun_corso").trim(),
     score_total: Number(payload?.score_total ?? 0),
-    max_total: Number(payload?.max_total ?? 100),
+    max_total: Number(payload?.max_total ?? 92),
     pct_total: Number(payload?.pct_total ?? 0),
     score_recall: Number(payload?.score_recall ?? 0),
-    max_recall: Number(payload?.max_recall ?? 88),
+    max_recall: Number(payload?.max_recall ?? 82),
     pct_recall: Number(payload?.pct_recall ?? 0),
     score_comprehension: Number(payload?.score_comprehension ?? 0),
-    max_comprehension: Number(payload?.max_comprehension ?? 12),
+    max_comprehension: Number(payload?.max_comprehension ?? 10),
     pct_comprehension: Number(payload?.pct_comprehension ?? 0),
     vocab_known_count: Number(payload?.vocab_known_count ?? 0),
     vocab_new_correct: Number(payload?.vocab_new_correct ?? 0),
-    vocab_new_total: Number(payload?.vocab_new_total ?? 20),
+    vocab_new_total: Number(payload?.vocab_new_total ?? 12),
     digits_shift_detected: Boolean(payload?.digits_shift_detected),
     section_scores: payload?.section_scores && typeof payload.section_scores === "object"
       ? payload.section_scores
@@ -250,6 +250,9 @@ async function postSubmissionToNeon(record) {
 
   if (!res.ok) {
     const errBody = await res.text().catch(() => "");
+    if (res.status === 409 || /duplicate key|23505/i.test(errBody)) {
+      return record.id;
+    }
     throw new Error(`Neon INSERT fallito (${res.status}): ${errBody}`);
   }
 

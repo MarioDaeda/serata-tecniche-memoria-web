@@ -95,10 +95,10 @@
         <div class="control-group">
           <label for="filter-round" class="control-label">Round</label>
           <select id="filter-round" aria-label="Filtra per round">
-            <option value="ALL">Tutti</option>
-            <option value="1">Round 1</option>
-            <option value="2">Round 2</option>
-            <option value="3">Round 3</option>
+            <option value="ALL">Tutte</option>
+            <option value="1">Prova 1 (Full)</option>
+            <option value="2">Prova 2 (Recupero 1)</option>
+            <option value="3">Prova 3 (Recupero 2)</option>
           </select>
         </div>
 
@@ -156,7 +156,7 @@
           aria-selected="false"
           aria-controls="panel-rounds"
         >
-          2. Confronto Round (1 → 2 → 3)
+          2. Confronto Prove
         </button>
         <button
           type="button"
@@ -194,15 +194,14 @@
       <section id="panel-rounds" class="tab-panel" role="tabpanel" aria-labelledby="tab-rounds" hidden>
         <div class="panel-header-row">
           <div>
-            <h2 class="panel-title">Progressione Round 1 → Round 2 → Round 3</h2>
-            <p class="panel-note">
-              Confronto della media % totale per categoria su tutti i round della serata selezionata.
+            <h2 id="rounds-panel-title" class="panel-title">Confronto Prova 2 (Primo Recupero) → Prova 3 (Secondo Recupero)</h2>
+            <p id="rounds-panel-note" class="panel-note">
+              Confronto della media % totale per categoria tra le prove della serata selezionata.
             </p>
           </div>
-          <div class="round-legend" aria-hidden="true">
-            <span class="legend-item"><i class="swatch swatch-r1"></i>Round 1 (A freddo)</span>
-            <span class="legend-item"><i class="swatch swatch-r2"></i>Round 2 (Post-tecniche)</span>
-            <span class="legend-item"><i class="swatch swatch-r3"></i>Round 3 (Ritest post-pausa)</span>
+          <div id="rounds-legend" class="round-legend" aria-hidden="true">
+            <span class="legend-item"><i class="swatch swatch-r2"></i>Prova 2 · Primo recupero</span>
+            <span class="legend-item"><i class="swatch swatch-r3"></i>Prova 3 · Secondo recupero</span>
           </div>
         </div>
         <div id="rounds-chart-container" class="rounds-chart-card"></div>
@@ -231,10 +230,10 @@
             <div class="control-group">
               <label for="section-filter-round" class="control-label">Round</label>
               <select id="section-filter-round">
-                <option value="ALL">Tutti i round</option>
-                <option value="1">Round 1</option>
-                <option value="2">Round 2</option>
-                <option value="3">Round 3</option>
+                <option value="ALL">Tutte le prove</option>
+                <option value="1">Prova 1 (Full)</option>
+                <option value="2">Prova 2 (Recupero 1)</option>
+                <option value="3">Prova 3 (Recupero 2)</option>
               </select>
             </div>
           </div>

@@ -42,6 +42,7 @@ const state = {
   autoRefresh: true,
   refreshTimerId: null,
   isRefreshing: false,
+  pendingRefresh: false,
   lastRefreshedAt: null
 };
 
@@ -57,6 +58,7 @@ function cacheDom() {
     "btn-autorefresh", "btn-refresh-now", "btn-seed-demo", "btn-export-csv",
     "btn-fullscreen", "btn-logout", "dashboard-banner",
     "live-kpi-strip", "live-categories-grid",
+    "rounds-panel-title", "rounds-panel-note", "rounds-legend",
     "rounds-chart-container", "rounds-cards-grid",
     "section-filter-category", "section-filter-round",
     "sections-bars-list", "sections-matrix-wrap",
@@ -286,6 +288,11 @@ function renderLiveTab(filtered) {
   clearChildren(grid);
 
   const overall = computeGroupStats(filtered);
+  const distinctRounds = new Set(filtered.map((s) => Number(s.round_num)).filter(Boolean));
+  const mixRoundsNote =
+    state.filterRound === "ALL" && distinctRounds.size > 1
+      ? " · mix di più prove (filtra Prova 2/3 in alto)"
+      : "";
 
   const kpis = [
     {
@@ -296,7 +303,9 @@ function renderLiveTab(filtered) {
     {
       label: "Media Totale Sala",
       value: formatPct(overall.avgPctTotal),
-      sub: overall.count ? `${formatNum(overall.avgScoreTotal)} / ${formatNum(overall.avgMaxTotal, 0)} pt medi` : "In attesa di consegne"
+      sub: overall.count
+        ? `${formatNum(overall.avgScoreTotal)} / ${formatNum(overall.avgMaxTotal, 0)} pt medi${mixRoundsNote}`
+        : "In attesa di consegne"
     },
     {
       label: "Media Ricordo",
@@ -401,8 +410,20 @@ function renderLiveTab(filtered) {
   }
 }
 
-/* ==================== RENDER TAB 2: CONFRONTO ROUND 1->2->3 ==================== */
-function buildRoundsSvgChart(matrix) {
+/* ==================== RENDER TAB 2: CONFRONTO PROVE ==================== */
+function badgeClassForDelta(diff) {
+  if (diff > 0) return "delta-badge--up";
+  if (diff < 0) return "delta-badge--down";
+  return "delta-badge--flat";
+}
+
+function appendDeltaBadge(container, label, diff) {
+  container.appendChild(
+    createEl("span", `delta-badge ${badgeClassForDelta(diff)}`, `${label} ${formatDeltaPct(diff)}`)
+  );
+}
+
+function buildRoundsSvgChart(matrix, activeRounds = [1, 2, 3]) {
   const ns = "http://www.w3.org/2000/svg";
   const width = 960;
   const height = 260;
@@ -417,7 +438,7 @@ function buildRoundsSvgChart(matrix) {
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
   svg.setAttribute("class", "rounds-svg");
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", "Grafico comparativo Round 1, Round 2 e Round 3 per categoria");
+  svg.setAttribute("aria-label", "Grafico comparativo delle prove per categoria");
 
   const makeSvgEl = (tag, attrs = {}, text = null) => {
     const node = document.createElementNS(ns, tag);
@@ -458,10 +479,10 @@ function buildRoundsSvgChart(matrix) {
   }
 
   const groupW = plotW / CATEGORIES.length;
-  const roundColors = ["#94a3b8", "#38bdf8", "#22c55e"];
-  const barW = 46;
-  const gap = 14;
-  const totalGroupBarsW = 3 * barW + 2 * gap;
+  const roundColors = { 1: "#94a3b8", 2: "#38bdf8", 3: "#22c55e" };
+  const barW = activeRounds.length === 2 ? 64 : 46;
+  const gap = activeRounds.length === 2 ? 18 : 14;
+  const totalGroupBarsW = activeRounds.length * barW + (activeRounds.length - 1) * gap;
 
   CATEGORIES.forEach((cat, catIdx) => {
     const groupCenterX = padLeft + groupW * (catIdx + 0.5);
@@ -482,7 +503,7 @@ function buildRoundsSvgChart(matrix) {
       )
     );
 
-    [1, 2, 3].forEach((rNum, rIdx) => {
+    activeRounds.forEach((rNum, rIdx) => {
       const cell = matrix[cat.key][rNum];
       const val = cell.avgPctTotal;
       const barX = startX + rIdx * (barW + gap);
@@ -510,7 +531,7 @@ function buildRoundsSvgChart(matrix) {
             width: barW,
             height: barH,
             rx: 6,
-            fill: roundColors[rIdx]
+            fill: roundColors[rNum] || "#38bdf8"
           })
         );
         svg.appendChild(
@@ -555,7 +576,7 @@ function buildRoundsSvgChart(matrix) {
             "font-weight": 700,
             "text-anchor": "middle"
           },
-          `R${rNum}`
+          `P${rNum}`
         )
       );
     });
@@ -571,6 +592,35 @@ function renderRoundsTab() {
   clearChildren(chartContainer);
   clearChildren(cardsGrid);
 
+  const hasRound1 = allRoundsItems.some((s) => Number(s.round_num) === 1);
+  const activeRounds = hasRound1 ? [1, 2, 3] : [2, 3];
+
+  if (el["rounds-panel-title"] && el["rounds-panel-note"] && el["rounds-legend"]) {
+    clearChildren(el["rounds-legend"]);
+    const addLegendItem = (swatchClass, label) => {
+      const item = createEl("span", "legend-item");
+      item.appendChild(createEl("i", `swatch ${swatchClass}`));
+      item.appendChild(document.createTextNode(label));
+      el["rounds-legend"].appendChild(item);
+    };
+
+    if (!hasRound1) {
+      el["rounds-panel-title"].textContent =
+        "Confronto Prova 2 (Primo Recupero) → Prova 3 (Secondo Recupero)";
+      el["rounds-panel-note"].textContent =
+        "La Prova 1 è solo memorizzazione. Qui confronti tenuta e variazione tra Prova 2 (Primo Recupero) e Prova 3 (Secondo Recupero).";
+      addLegendItem("swatch-r2", "Prova 2 · Primo recupero");
+      addLegendItem("swatch-r3", "Prova 3 · Secondo recupero");
+    } else {
+      el["rounds-panel-title"].textContent = "Progressione Prova 1 → Prova 2 → Prova 3";
+      el["rounds-panel-note"].textContent =
+        "Confronto della media % totale per categoria su tutte le prove della serata selezionata.";
+      addLegendItem("swatch-r1", "Prova 1 · Modalità unica");
+      addLegendItem("swatch-r2", "Prova 2 · Primo recupero");
+      addLegendItem("swatch-r3", "Prova 3 · Secondo recupero");
+    }
+  }
+
   const matrix = {};
   for (const cat of CATEGORIES) {
     matrix[cat.key] = {};
@@ -582,7 +632,13 @@ function renderRoundsTab() {
     }
   }
 
-  chartContainer.appendChild(buildRoundsSvgChart(matrix));
+  chartContainer.appendChild(buildRoundsSvgChart(matrix, activeRounds));
+
+  const roundLabels = {
+    1: "Prova 1 · Modalità unica",
+    2: "Prova 2 · Primo recupero",
+    3: "Prova 3 · Secondo recupero"
+  };
 
   for (const cat of CATEGORIES) {
     const card = createEl("article", "round-cat-card");
@@ -594,39 +650,30 @@ function renderRoundsTab() {
     const r3 = matrix[cat.key][3].avgPctTotal;
 
     const deltas = createEl("div", "delta-badges");
-    if (r1 !== null && r2 !== null) {
-      const diff12 = r2 - r1;
-      const badge12 = createEl(
-        "span",
-        `delta-badge ${diff12 > 0 ? "delta-badge--up" : "delta-badge--flat"}`,
-        `R1→R2 ${formatDeltaPct(diff12)}`
-      );
-      deltas.appendChild(badge12);
-    }
-    if (r1 !== null && r3 !== null) {
-      const diff13 = r3 - r1;
-      const badge13 = createEl(
-        "span",
-        `delta-badge ${diff13 > 0 ? "delta-badge--up" : "delta-badge--flat"}`,
-        `R1→R3 ${formatDeltaPct(diff13)}`
-      );
-      deltas.appendChild(badge13);
-    }
-    if (!deltas.childElementCount) {
-      deltas.appendChild(createEl("span", "delta-badge delta-badge--flat", "In attesa R2/R3"));
+    if (hasRound1) {
+      if (r1 !== null && r2 !== null) appendDeltaBadge(deltas, "P1→P2", r2 - r1);
+      if (r2 !== null && r3 !== null) appendDeltaBadge(deltas, "P2→P3", r3 - r2);
+      if (r1 !== null && r3 !== null) appendDeltaBadge(deltas, "P1→P3", r3 - r1);
+      if (!deltas.childElementCount) {
+        deltas.appendChild(createEl("span", "delta-badge delta-badge--flat", "In attesa prove"));
+      }
+    } else {
+      if (r2 !== null && r3 !== null) {
+        appendDeltaBadge(deltas, "P2→P3", r3 - r2);
+      } else if (r2 !== null) {
+        deltas.appendChild(createEl("span", "delta-badge delta-badge--flat", "In attesa Prova 3"));
+      } else if (r3 !== null) {
+        deltas.appendChild(createEl("span", "delta-badge delta-badge--flat", "Solo Prova 3"));
+      } else {
+        deltas.appendChild(createEl("span", "delta-badge delta-badge--flat", "In attesa consegne"));
+      }
     }
 
     header.appendChild(deltas);
     card.appendChild(header);
 
     const rows = createEl("div", "round-bar-rows");
-    const roundLabels = {
-      1: "Round 1 · A freddo",
-      2: "Round 2 · Post-tecniche",
-      3: "Round 3 · Ritest"
-    };
-
-    for (const rNum of [1, 2, 3]) {
+    for (const rNum of activeRounds) {
       const cell = matrix[cat.key][rNum];
       const row = createEl("div", "round-bar-row");
       const meta = createEl("div", "round-bar-meta");
@@ -1024,7 +1071,11 @@ function exportFilteredCsv() {
 
 /* ==================== DATA FETCHING & AUTO-REFRESH ==================== */
 async function refreshData({ initial = false } = {}) {
-  if (!state.authenticated || state.isRefreshing) return;
+  if (!state.authenticated) return;
+  if (state.isRefreshing) {
+    state.pendingRefresh = true;
+    return;
+  }
   state.isRefreshing = true;
   try {
     const querySession =
@@ -1040,14 +1091,8 @@ async function refreshData({ initial = false } = {}) {
 
     if (initial && !state.sessionChosenByUser) {
       const def = String(APP_CONFIG.defaultSession || "SERATA-1").trim().toUpperCase();
-      if (state.sessions.includes(def)) {
-        state.selectedSession = def;
-      } else if (state.sessions.length > 0) {
-        state.selectedSession = state.sessions[0];
-      } else {
-        state.selectedSession = def;
-      }
-      el["qr-session"].value = state.selectedSession === "ALL" ? def : state.selectedSession;
+      state.selectedSession = def;
+      el["qr-session"].value = def;
     }
 
     populateSessionSelector();
@@ -1058,6 +1103,10 @@ async function refreshData({ initial = false } = {}) {
     showBanner(`Errore aggiornamento dati: ${err.message}`, true);
   } finally {
     state.isRefreshing = false;
+    if (state.pendingRefresh) {
+      state.pendingRefresh = false;
+      refreshData({ initial: false });
+    }
   }
 }
 
