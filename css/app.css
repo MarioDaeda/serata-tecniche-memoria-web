@@ -297,6 +297,13 @@ body {
   width: 100%;
 }
 
+.btn-sm {
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  border-radius: var(--radius-sm);
+}
+
 .btn-primary {
   background: var(--primary);
   color: #ffffff;
@@ -746,10 +753,172 @@ body {
   gap: 8px;
 }
 
+.chem-photo-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chem-photo-preview-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+}
+
+.chem-photo-preview-wrap[hidden] {
+  display: none !important;
+}
+
+.chem-photo-thumb {
+  display: block;
+  width: 100%;
+  max-height: 130px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+}
+
+.chem-photo-preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chem-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-items: stretch;
+}
+
 .chem-compare-panel {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
+}
+
+.chem-compare-panel .field-label {
+  font-size: 0.82rem;
+  margin-bottom: 0;
+}
+
+.chem-compare-frame {
+  width: 100%;
+  background: #ffffff;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  aspect-ratio: 4 / 3;
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-in;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.chem-compare-frame:hover,
+.chem-compare-frame:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+  outline: none;
+}
+
+.chem-compare-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.chem-paper-placeholder {
+  flex: 1;
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 10px;
+  font-size: 0.84rem;
+  background: var(--surface-alt);
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+}
+
+.chem-zoom-hint {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  text-align: center;
+  margin: -4px 0 0;
+}
+
+.chem-zoom-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.chem-zoom-modal[hidden] {
+  display: none !important;
+}
+
+.chem-zoom-dialog {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 94vw;
+  max-height: 90dvh;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: var(--shadow-md);
+}
+
+.chem-zoom-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.chem-zoom-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.chem-zoom-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  overflow: hidden;
+}
+
+.chem-zoom-img {
+  display: block;
+  max-width: 100%;
+  max-height: 72dvh;
+  object-fit: contain;
 }
 
 .chem-eval-prompt {

@@ -133,12 +133,14 @@ function ensureSectionAnswerContainer(section) {
           ctx.attempt.answers[section.id] = {
             subPhase: "draw",
             drawingDataUrl: "",
+            photoDataUrl: "",
             usedPaper: false,
             selfEval: null
           };
         } else {
           if (existing.subPhase !== "selfcheck") existing.subPhase = "draw";
           if (typeof existing.drawingDataUrl !== "string") existing.drawingDataUrl = "";
+          if (typeof existing.photoDataUrl !== "string") existing.photoDataUrl = "";
           existing.usedPaper = Boolean(existing.usedPaper);
         }
       } else {
@@ -826,6 +828,73 @@ function wireDigitsRecall(section, answers) {
   }
 }
 
+async function compressImageFileToDataUrl(file, maxDim = 900, quality = 0.78) {
+  if (!file) {
+    throw new Error("Nessun file selezionato.");
+  }
+  if (file.type && !file.type.startsWith("image/")) {
+    throw new Error("Seleziona un file immagine valido.");
+  }
+
+  let source = null;
+  let srcW = 0;
+  let srcH = 0;
+  let closeBitmap = null;
+  let revokeUrl = null;
+
+  try {
+    if (typeof createImageBitmap === "function") {
+      try {
+        const bitmap = await createImageBitmap(file);
+        source = bitmap;
+        srcW = bitmap.width;
+        srcH = bitmap.height;
+        closeBitmap = () => bitmap.close?.();
+      } catch {
+        source = null;
+      }
+    }
+
+    if (!source) {
+      const objectUrl = URL.createObjectURL(file);
+      revokeUrl = () => URL.revokeObjectURL(objectUrl);
+      const img = await new Promise((resolve, reject) => {
+        const el = new Image();
+        el.onload = () => resolve(el);
+        el.onerror = () => reject(new Error("Impossibile leggere la foto selezionata."));
+        el.src = objectUrl;
+      });
+      source = img;
+      srcW = img.naturalWidth || img.width;
+      srcH = img.naturalHeight || img.height;
+    }
+
+    if (!srcW || !srcH) {
+      throw new Error("Dimensioni immagine non valide.");
+    }
+
+    const scale = Math.min(1, maxDim / Math.max(srcW, srcH));
+    const targetW = Math.max(1, Math.round(srcW * scale));
+    const targetH = Math.max(1, Math.round(srcH * scale));
+
+    const offscreen = document.createElement("canvas");
+    offscreen.width = targetW;
+    offscreen.height = targetH;
+    const ctx2d = offscreen.getContext("2d");
+    if (!ctx2d) {
+      throw new Error("Canvas non disponibile sul dispositivo.");
+    }
+    ctx2d.fillStyle = "#ffffff";
+    ctx2d.fillRect(0, 0, targetW, targetH);
+    ctx2d.drawImage(source, 0, 0, targetW, targetH);
+
+    return offscreen.toDataURL("image/jpeg", quality);
+  } finally {
+    closeBitmap?.();
+    revokeUrl?.();
+  }
+}
+
 function renderChemistryRecall(section, answers) {
   const isFreeDraw =
     section.mode === "free_draw_selfcheck" ||
@@ -833,21 +902,49 @@ function renderChemistryRecall(section, answers) {
 
   if (isFreeDraw) {
     if (answers.subPhase === "selfcheck") {
-      const userDrawingHtml = answers.drawingDataUrl
-        ? `
+      let userPanelHtml = "";
+      if (answers.photoDataUrl) {
+        userPanelHtml = `
           <div class="chem-compare-panel">
-            <span class="field-label">Il tuo disegno</span>
-            <div class="chem-svg-frame">
-              <img src="${answers.drawingDataUrl}" alt="Il tuo disegno" class="chem-study-img" />
-            </div>
-          </div>
-        `
-        : `
-          <div class="chem-compare-panel">
-            <span class="field-label">Il tuo disegno</span>
-            <div class="notice-box">Confronta il disegno che hai tracciato su carta con la struttura ufficiale qui sotto.</div>
+            <span class="field-label">La tua foto</span>
+            <button
+              type="button"
+              class="chem-compare-frame"
+              data-zoom-src="${answers.photoDataUrl}"
+              data-zoom-title="La tua foto"
+              aria-label="Ingrandisci la tua foto"
+            >
+              <img src="${answers.photoDataUrl}" alt="La tua foto della formula" class="chem-compare-img" />
+            </button>
           </div>
         `;
+      } else if (answers.drawingDataUrl) {
+        userPanelHtml = `
+          <div class="chem-compare-panel">
+            <span class="field-label">Il tuo disegno</span>
+            <button
+              type="button"
+              class="chem-compare-frame"
+              data-zoom-src="${answers.drawingDataUrl}"
+              data-zoom-title="Il tuo disegno"
+              aria-label="Ingrandisci il tuo disegno"
+            >
+              <img src="${answers.drawingDataUrl}" alt="Il tuo disegno" class="chem-compare-img" />
+            </button>
+          </div>
+        `;
+      } else {
+        userPanelHtml = `
+          <div class="chem-compare-panel">
+            <span class="field-label">Il tuo foglio</span>
+            <div class="chem-paper-placeholder">
+              Confronta il tuo foglio di carta con la formula a fianco.
+            </div>
+          </div>
+        `;
+      }
+
+      const refSrc = `./${escapeHtml(section.studySvgPath || "")}`;
 
       return `
         <div class="card stack-md">
@@ -856,23 +953,28 @@ function renderChemistryRecall(section, answers) {
             ${section.formula ? `<span class="chem-formula">${escapeHtml(section.formula)}</span>` : ""}
           </div>
 
-          ${userDrawingHtml}
+          <div class="chem-compare-grid">
+            ${userPanelHtml}
 
-          <div class="chem-compare-panel">
-            <span class="field-label">Struttura corretta di riferimento</span>
-            <div class="chem-svg-frame">
-              <img
-                src="./${escapeHtml(section.studySvgPath || "")}"
-                alt="${escapeHtml(section.moleculeName || "Formula corretta")}"
-                class="chem-study-img"
-              />
+            <div class="chem-compare-panel">
+              <span class="field-label">Formula corretta</span>
+              <button
+                type="button"
+                class="chem-compare-frame"
+                data-zoom-src="${refSrc}"
+                data-zoom-title="Formula corretta"
+                aria-label="Ingrandisci la formula corretta"
+              >
+                <img
+                  src="${refSrc}"
+                  alt="${escapeHtml(section.moleculeName || "Formula corretta")}"
+                  class="chem-compare-img"
+                />
+              </button>
             </div>
-            ${
-              section.selfCheckCriteria
-                ? `<p class="helper-text" style="margin-top: 8px;">${escapeHtml(section.selfCheckCriteria)}</p>`
-                : ""
-            }
           </div>
+
+          <p class="chem-zoom-hint">Tocca un'immagine per ingrandirla</p>
 
           <div class="chem-eval-prompt">
             <p class="question-prompt" style="margin-bottom: 10px;">La struttura che hai disegnato è corretta?</p>
@@ -883,6 +985,18 @@ function renderChemistryRecall(section, answers) {
               <button type="button" id="chem-eval-wrong" class="btn btn-eval-wrong" data-self-eval="wrong">
                 ✗ Errata
               </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="chem-zoom-modal" class="chem-zoom-modal" role="dialog" aria-modal="true" aria-labelledby="chem-zoom-title" hidden>
+          <div class="chem-zoom-dialog">
+            <div class="chem-zoom-header">
+              <span id="chem-zoom-title" class="chem-zoom-title"></span>
+              <button type="button" id="chem-zoom-close" class="btn btn-secondary btn-sm">Chiudi</button>
+            </div>
+            <div class="chem-zoom-body">
+              <img id="chem-zoom-img" class="chem-zoom-img" alt="" />
             </div>
           </div>
         </div>
@@ -906,6 +1020,28 @@ function renderChemistryRecall(section, answers) {
         <div class="chem-canvas-tools">
           <button type="button" id="chem-undo-btn" class="btn btn-secondary">Annulla tratto</button>
           <button type="button" id="chem-clear-btn" class="btn btn-secondary">Pulisci</button>
+        </div>
+
+        <div class="chem-photo-box">
+          <input type="file" id="chem-photo-input" accept="image/*" hidden />
+          <button type="button" id="chem-photo-btn" class="btn btn-secondary btn-block">
+            📷 Scatta o carica foto del foglio
+          </button>
+          <div id="chem-photo-preview-wrap" class="chem-photo-preview-wrap" ${answers.photoDataUrl ? "" : "hidden"}>
+            <img
+              id="chem-photo-thumb"
+              class="chem-photo-thumb"
+              src="${answers.photoDataUrl || ""}"
+              alt="Anteprima foto formula"
+            />
+            <div class="chem-photo-preview-bar">
+              <span class="helper-text">Foto pronta per il confronto affiancato</span>
+              <button type="button" id="chem-photo-remove-btn" class="btn btn-secondary btn-sm">
+                Rimuovi foto
+              </button>
+            </div>
+          </div>
+          <div id="chem-photo-error" class="inline-error" hidden></div>
         </div>
 
         <label class="known-toggle ${answers.usedPaper ? "checked" : ""}" style="justify-content: center;">
@@ -994,12 +1130,54 @@ function wireChemistryRecall(section, answers) {
 
   if (isFreeDraw) {
     if (answers.subPhase === "selfcheck") {
+      const zoomModal = document.getElementById("chem-zoom-modal");
+      const zoomTitle = document.getElementById("chem-zoom-title");
+      const zoomImg = document.getElementById("chem-zoom-img");
+      const zoomClose = document.getElementById("chem-zoom-close");
+
+      const onZoomKeydown = (e) => {
+        if (e.key === "Escape") {
+          closeZoomModal();
+        }
+      };
+
+      const closeZoomModal = () => {
+        if (zoomModal) zoomModal.hidden = true;
+        document.removeEventListener("keydown", onZoomKeydown);
+      };
+
+      const openZoomModal = (src, title) => {
+        if (!zoomModal || !zoomImg || !src) return;
+        if (zoomTitle) zoomTitle.textContent = title || "";
+        zoomImg.src = src;
+        zoomImg.alt = title || "Immagine ingrandita";
+        zoomModal.hidden = false;
+        document.removeEventListener("keydown", onZoomKeydown);
+        document.addEventListener("keydown", onZoomKeydown);
+        zoomClose?.focus();
+      };
+
+      const zoomButtons = Array.from(rootEl.querySelectorAll("[data-zoom-src]"));
+      zoomButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          openZoomModal(btn.getAttribute("data-zoom-src"), btn.getAttribute("data-zoom-title"));
+        });
+      });
+
+      zoomClose?.addEventListener("click", closeZoomModal);
+      zoomModal?.addEventListener("click", (e) => {
+        if (e.target === zoomModal) {
+          closeZoomModal();
+        }
+      });
+
       const evalButtons = Array.from(rootEl.querySelectorAll("[data-self-eval]"));
       evalButtons.forEach((btn) => {
         btn.addEventListener("click", () => {
           if (isAdvancing) return;
           isAdvancing = true;
           try {
+            closeZoomModal();
             answers.selfEval = btn.getAttribute("data-self-eval") === "correct" ? "correct" : "wrong";
             persistAttempt();
             clearPhaseTimer();
@@ -1017,6 +1195,12 @@ function wireChemistryRecall(section, answers) {
     const clearBtn = document.getElementById("chem-clear-btn");
     const paperCb = document.getElementById("chem-paper-checkbox");
     const finishBtn = document.getElementById("chem-finish-draw-btn");
+    const photoInput = document.getElementById("chem-photo-input");
+    const photoBtn = document.getElementById("chem-photo-btn");
+    const photoPreviewWrap = document.getElementById("chem-photo-preview-wrap");
+    const photoThumb = document.getElementById("chem-photo-thumb");
+    const photoRemoveBtn = document.getElementById("chem-photo-remove-btn");
+    const photoErrEl = document.getElementById("chem-photo-error");
 
     const strokes = [];
     let activeStroke = null;
@@ -1132,6 +1316,52 @@ function wireChemistryRecall(section, answers) {
     paperCb?.addEventListener("change", () => {
       answers.usedPaper = paperCb.checked;
       paperCb.closest(".known-toggle")?.classList.toggle("checked", paperCb.checked);
+      persistAttempt();
+    });
+
+    photoBtn?.addEventListener("click", () => {
+      photoInput?.click();
+    });
+
+    photoInput?.addEventListener("change", async () => {
+      const file = photoInput.files?.[0];
+      if (!file) return;
+      if (photoErrEl) {
+        photoErrEl.hidden = true;
+        photoErrEl.textContent = "";
+      }
+      try {
+        const compressedUrl = await compressImageFileToDataUrl(file, 900, 0.78);
+        answers.photoDataUrl = compressedUrl;
+        answers.usedPaper = true;
+        if (paperCb) {
+          paperCb.checked = true;
+          paperCb.closest(".known-toggle")?.classList.add("checked");
+        }
+        if (photoThumb) {
+          photoThumb.src = compressedUrl;
+        }
+        if (photoPreviewWrap) {
+          photoPreviewWrap.hidden = false;
+        }
+        persistAttempt();
+      } catch (err) {
+        if (photoErrEl) {
+          photoErrEl.textContent = err?.message || "Errore durante il caricamento della foto.";
+          photoErrEl.hidden = false;
+        }
+      }
+    });
+
+    photoRemoveBtn?.addEventListener("click", () => {
+      answers.photoDataUrl = "";
+      if (photoInput) photoInput.value = "";
+      if (photoThumb) photoThumb.removeAttribute("src");
+      if (photoPreviewWrap) photoPreviewWrap.hidden = true;
+      if (photoErrEl) {
+        photoErrEl.hidden = true;
+        photoErrEl.textContent = "";
+      }
       persistAttempt();
     });
 
@@ -1571,10 +1801,14 @@ function renderRecallView(section) {
       </div>
     `;
 
+  const instructionBannerText = isChemistrySelfCheckActive(section, "recall")
+    ? "Confronta il tuo disegno (a sinistra) con la struttura corretta (a destra) e indica se è corretta o errata."
+    : section.instructionRecall || "Inserisci ciò che ricordi prima dello scadere del tempo.";
+
   rootEl.innerHTML = `
     ${renderTopBar(section, "recall")}
     <div class="instruction-banner recall">
-      ${escapeHtml(section.instructionRecall || "Inserisci ciò che ricordi prima dello scadere del tempo.")}
+      ${escapeHtml(instructionBannerText)}
     </div>
     ${bodyHtml}
     ${footerHtml}
