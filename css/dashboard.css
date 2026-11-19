@@ -728,13 +728,15 @@ select {
 }
 
 .round-cat-card {
-  background: var(--bg-surface);
+  background: linear-gradient(180deg, rgba(23, 37, 64, 0.92) 0%, rgba(15, 25, 45, 0.98) 100%);
   border: 1px solid var(--border-subtle);
+  border-top: 4px solid var(--cat-accent, var(--accent-primary));
   border-radius: var(--radius-lg);
-  padding: 22px;
+  padding: 20px 22px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-shadow: 0 10px 26px rgba(2, 6, 23, 0.28);
 }
 
 .round-cat-header {
@@ -742,39 +744,45 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  flex-wrap: nowrap;
 }
 
 .round-cat-title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
 }
 
 .delta-badges {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .delta-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 5px 12px;
+  gap: 5px;
+  padding: 6px 13px;
   border-radius: 999px;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .delta-badge--up {
-  background: rgba(34, 197, 94, 0.18);
-  color: #86efac;
-  border: 1px solid rgba(34, 197, 94, 0.55);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.24), rgba(34, 197, 94, 0.14));
+  color: #6ee7b7;
+  border: 1px solid rgba(52, 211, 153, 0.55);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.16);
 }
 
 .delta-badge--flat {
-  background: rgba(148, 163, 184, 0.16);
+  background: rgba(148, 163, 184, 0.14);
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
 }
@@ -783,6 +791,139 @@ select {
   background: rgba(248, 113, 113, 0.16);
   color: #fca5a5;
   border: 1px solid rgba(248, 113, 113, 0.55);
+}
+
+.gain-visual-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gain-score-flow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.gain-endpoint {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gain-endpoint--right {
+  text-align: right;
+}
+
+.gain-endpoint-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.gain-endpoint-val {
+  font-size: 1.55rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.gain-endpoint-val--prima {
+  color: var(--text-secondary);
+}
+
+.gain-endpoint-val--dopo {
+  color: #ffffff;
+}
+
+.gain-arrow {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #34d399;
+  opacity: 0.9;
+}
+
+.gain-track-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.gain-track {
+  position: relative;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(9, 17, 31, 0.85);
+  border: 1px solid rgba(59, 83, 132, 0.55);
+  overflow: hidden;
+}
+
+.gain-seg-base {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--cat-accent, #38bdf8);
+  opacity: 0.42;
+  transition: width 0.35s ease;
+}
+
+.gain-seg-jump {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.75), #34d399);
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.45);
+  transition: left 0.35s ease, width 0.35s ease;
+}
+
+.gain-seg-jump--down {
+  background: linear-gradient(90deg, rgba(248, 113, 113, 0.75), #f87171);
+  box-shadow: none;
+}
+
+.gain-marker-prima {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(248, 250, 252, 0.85);
+  z-index: 2;
+}
+
+.gain-scale-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.gain-footer-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(40, 58, 94, 0.65);
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.gain-multiplier-pill {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #bae6fd;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 .round-bar-rows {

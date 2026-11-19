@@ -425,19 +425,19 @@ function appendDeltaBadge(container, label, diff) {
 }
 
 const CHART_CATEGORY_ORDER = [
-  { key: "nessun_corso", label: "Nessun corso", shortLabel: "Nessun corso", color: "#f472b6" },
-  { key: "weekend", label: "Corso questo weekend", shortLabel: "Corso weekend", color: "#38bdf8" },
-  { key: "mesi_fa", label: "Corso mesi fa", shortLabel: "Corso mesi fa", color: "#f59e0b" }
+  { key: "nessun_corso", label: "Nessun corso", shortLabel: "Nessun corso", color: "#fb7185", gradTop: "#fda4af", gradBot: "#e11d48" },
+  { key: "weekend", label: "Corso questo weekend", shortLabel: "Corso weekend", color: "#38bdf8", gradTop: "#7dd3fc", gradBot: "#0284c7" },
+  { key: "mesi_fa", label: "Corso mesi fa", shortLabel: "Corso mesi fa", color: "#fbbf24", gradTop: "#fde68a", gradBot: "#d97706" }
 ];
 
 function buildRoundsSvgChart(matrix) {
   const ns = "http://www.w3.org/2000/svg";
   const width = 960;
-  const height = 276;
+  const height = 290;
   const padLeft = 58;
   const padRight = 24;
-  const padTop = 26;
-  const padBottom = 56;
+  const padTop = 36;
+  const padBottom = 58;
   const plotW = width - padLeft - padRight;
   const plotH = height - padTop - padBottom;
 
@@ -455,6 +455,21 @@ function buildRoundsSvgChart(matrix) {
     if (text !== null) node.textContent = String(text);
     return node;
   };
+
+  // Gradienti morbidi per le 3 categorie (Prima attenuato, Dopo pieno e luminoso)
+  const defs = makeSvgEl("defs");
+  for (const cat of CHART_CATEGORY_ORDER) {
+    const gPrima = makeSvgEl("linearGradient", { id: `grad-${cat.key}-1`, x1: "0", y1: "0", x2: "0", y2: "1" });
+    gPrima.appendChild(makeSvgEl("stop", { offset: "0%", "stop-color": cat.color, "stop-opacity": "0.78" }));
+    gPrima.appendChild(makeSvgEl("stop", { offset: "100%", "stop-color": cat.gradBot, "stop-opacity": "0.52" }));
+    defs.appendChild(gPrima);
+
+    const gDopo = makeSvgEl("linearGradient", { id: `grad-${cat.key}-2`, x1: "0", y1: "0", x2: "0", y2: "1" });
+    gDopo.appendChild(makeSvgEl("stop", { offset: "0%", "stop-color": cat.gradTop, "stop-opacity": "1" }));
+    gDopo.appendChild(makeSvgEl("stop", { offset: "100%", "stop-color": cat.gradBot, "stop-opacity": "0.95" }));
+    defs.appendChild(gDopo);
+  }
+  svg.appendChild(defs);
 
   // Griglia orizzontale 0, 25, 50, 75, 100%
   for (const pct of [0, 25, 50, 75, 100]) {
@@ -490,9 +505,9 @@ function buildRoundsSvgChart(matrix) {
   svg.appendChild(
     makeSvgEl("line", {
       x1: midX,
-      y1: padTop - 4,
+      y1: padTop - 8,
       x2: midX,
-      y2: padTop + plotH + 34,
+      y2: padTop + plotH + 36,
       stroke: "#334155",
       "stroke-width": 1.5,
       "stroke-dasharray": "5 5"
@@ -519,7 +534,7 @@ function buildRoundsSvgChart(matrix) {
         {
           x: groupCenterX,
           y: height - 10,
-          fill: phase.rNum === 2 ? "#86efac" : "#f8fafc",
+          fill: phase.rNum === 2 ? "#6ee7b7" : "#e2e8f0",
           "font-size": 15,
           "font-weight": 800,
           "text-anchor": "middle"
@@ -542,9 +557,9 @@ function buildRoundsSvgChart(matrix) {
           y: padTop,
           width: barW,
           height: plotH,
-          rx: 6,
+          rx: 8,
           fill: "#0d1729",
-          opacity: 0.7
+          opacity: 0.72
         })
       );
 
@@ -555,8 +570,10 @@ function buildRoundsSvgChart(matrix) {
             y: barY,
             width: barW,
             height: barH,
-            rx: 6,
-            fill: cat.color
+            rx: 8,
+            fill: `url(#grad-${cat.key}-${phase.rNum})`,
+            stroke: phase.rNum === 1 ? cat.color : "none",
+            "stroke-width": phase.rNum === 1 ? 1.5 : 0
           })
         );
         svg.appendChild(
@@ -564,7 +581,7 @@ function buildRoundsSvgChart(matrix) {
             "text",
             {
               x: barX + barW / 2,
-              y: Math.max(padTop + 14, barY - 6),
+              y: barY - 8,
               fill: "#f8fafc",
               "font-size": 14,
               "font-weight": 800,
@@ -595,7 +612,7 @@ function buildRoundsSvgChart(matrix) {
           "text",
           {
             x: barX + barW / 2,
-            y: padTop + plotH + 17,
+            y: padTop + plotH + 18,
             fill: "#cbd5e1",
             "font-size": 11.5,
             "font-weight": 700,
@@ -652,22 +669,25 @@ function renderRoundsTab() {
 
   chartContainer.appendChild(buildRoundsSvgChart(matrix));
 
-  const roundLabels = {
-    1: "Prima · Senza tecniche",
-    2: "Dopo · Con tecniche"
-  };
-
-  for (const cat of CATEGORIES) {
+  for (const cat of CHART_CATEGORY_ORDER) {
     const card = createEl("article", "round-cat-card");
+    card.style.setProperty("--cat-accent", cat.color);
+
     const header = createEl("div", "round-cat-header");
     header.appendChild(createEl("h3", "round-cat-title", cat.label));
 
-    const r1 = matrix[cat.key][1].avgPctTotal;
-    const r2 = matrix[cat.key][2].avgPctTotal;
+    const c1 = matrix[cat.key][1];
+    const c2 = matrix[cat.key][2];
+    const r1 = c1.avgPctTotal;
+    const r2 = c2.avgPctTotal;
 
     const deltas = createEl("div", "delta-badges");
     if (r1 !== null && r2 !== null) {
-      appendDeltaBadge(deltas, "Prima→Dopo", r2 - r1);
+      const diff = r2 - r1;
+      const arrow = diff > 0 ? "▲" : diff < 0 ? "▼" : "•";
+      deltas.appendChild(
+        createEl("span", `delta-badge ${badgeClassForDelta(diff)}`, `${arrow} ${formatDeltaPct(diff)}`)
+      );
     } else if (r1 !== null) {
       deltas.appendChild(createEl("span", "delta-badge delta-badge--flat", "In attesa Dopo"));
     } else if (r2 !== null) {
@@ -679,31 +699,82 @@ function renderRoundsTab() {
     header.appendChild(deltas);
     card.appendChild(header);
 
-    const rows = createEl("div", "round-bar-rows");
-    for (const rNum of activeRounds) {
-      const cell = matrix[cat.key][rNum];
-      const row = createEl("div", "round-bar-row");
-      const meta = createEl("div", "round-bar-meta");
-      meta.appendChild(createEl("span", "", roundLabels[rNum]));
-      meta.appendChild(
-        createEl(
-          "span",
-          "",
-          cell.count > 0 ? `${formatPct(cell.avgPctTotal)} (n=${cell.count})` : "—"
-        )
-      );
-      row.appendChild(meta);
+    // Visualizzazione "Salto" Prima -> Dopo su barra unica 0-100%
+    const visualBlock = createEl("div", "gain-visual-block");
 
-      const track = createEl("div", "round-track");
-      const fill = createEl("div", `round-fill round-fill--${rNum}`);
-      const w = cell.avgPctTotal === null ? 0 : Math.max(0, Math.min(100, cell.avgPctTotal));
-      fill.style.width = `${w.toFixed(1)}%`;
-      track.appendChild(fill);
-      row.appendChild(track);
-      rows.appendChild(row);
+    const scoreFlow = createEl("div", "gain-score-flow");
+    const epLeft = createEl("div", "gain-endpoint");
+    epLeft.appendChild(createEl("span", "gain-endpoint-label", "Prima"));
+    epLeft.appendChild(createEl("span", "gain-endpoint-val gain-endpoint-val--prima", formatPct(r1)));
+
+    const arrowMid = createEl("span", "gain-arrow", "━━▶");
+
+    const epRight = createEl("div", "gain-endpoint gain-endpoint--right");
+    epRight.appendChild(createEl("span", "gain-endpoint-label", "Dopo"));
+    epRight.appendChild(createEl("span", "gain-endpoint-val gain-endpoint-val--dopo", formatPct(r2)));
+
+    scoreFlow.appendChild(epLeft);
+    scoreFlow.appendChild(arrowMid);
+    scoreFlow.appendChild(epRight);
+    visualBlock.appendChild(scoreFlow);
+
+    const trackWrap = createEl("div", "gain-track-wrap");
+    const track = createEl("div", "gain-track");
+
+    const p1 = r1 === null ? 0 : Math.max(0, Math.min(100, r1));
+    const p2 = r2 === null ? 0 : Math.max(0, Math.min(100, r2));
+
+    if (r1 !== null && r2 !== null) {
+      const baseW = Math.min(p1, p2);
+      const jumpStart = Math.min(p1, p2);
+      const jumpW = Math.abs(p2 - p1);
+
+      const baseSeg = createEl("div", "gain-seg-base");
+      baseSeg.style.width = `${baseW.toFixed(1)}%`;
+      track.appendChild(baseSeg);
+
+      if (jumpW > 0.1) {
+        const jumpSeg = createEl("div", `gain-seg-jump ${p2 < p1 ? "gain-seg-jump--down" : ""}`);
+        jumpSeg.style.left = `${jumpStart.toFixed(1)}%`;
+        jumpSeg.style.width = `${jumpW.toFixed(1)}%`;
+        track.appendChild(jumpSeg);
+      }
+
+      const marker = createEl("div", "gain-marker-prima");
+      marker.style.left = `${p1.toFixed(1)}%`;
+      track.appendChild(marker);
+    } else if (r1 !== null) {
+      const baseSeg = createEl("div", "gain-seg-base");
+      baseSeg.style.width = `${p1.toFixed(1)}%`;
+      track.appendChild(baseSeg);
+    } else if (r2 !== null) {
+      const jumpSeg = createEl("div", "gain-seg-jump");
+      jumpSeg.style.left = "0%";
+      jumpSeg.style.width = `${p2.toFixed(1)}%`;
+      track.appendChild(jumpSeg);
     }
 
-    card.appendChild(rows);
+    trackWrap.appendChild(track);
+    const ticks = createEl("div", "gain-scale-ticks");
+    ticks.appendChild(createEl("span", "", "0%"));
+    ticks.appendChild(createEl("span", "", "50%"));
+    ticks.appendChild(createEl("span", "", "100%"));
+    trackWrap.appendChild(ticks);
+    visualBlock.appendChild(trackWrap);
+
+    card.appendChild(visualBlock);
+
+    // Footer con numero partecipanti e moltiplicatore (es. 4,2x)
+    const footer = createEl("div", "gain-footer-meta");
+    footer.appendChild(createEl("span", "", `Prima: n=${c1.count} · Dopo: n=${c2.count}`));
+    if (r1 !== null && r2 !== null && r1 > 0 && r2 > r1) {
+      const mult = r2 / r1;
+      footer.appendChild(
+        createEl("span", "gain-multiplier-pill", `${formatNum(mult, 1)}× risultato iniziale`)
+      );
+    }
+    card.appendChild(footer);
+
     cardsGrid.appendChild(card);
   }
 }
