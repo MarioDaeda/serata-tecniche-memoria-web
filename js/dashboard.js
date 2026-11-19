@@ -62,7 +62,7 @@ function cacheDom() {
     "rounds-chart-container", "rounds-cards-grid",
     "section-filter-category", "section-filter-round",
     "sections-bars-list", "sections-matrix-wrap",
-    "qr-session", "qr-test", "qr-round", "qr-mode", "qr-url-display",
+    "qr-session", "qr-test", "qr-stage", "qr-url-display",
     "btn-qr-fullscreen", "btn-copy-wa-link", "qr-copy-feedback",
     "qr-stage-badge", "qr-preview-container",
     "qr-modal", "btn-close-qr-modal", "qr-modal-title",
@@ -288,10 +288,11 @@ function renderLiveTab(filtered) {
   clearChildren(grid);
 
   const overall = computeGroupStats(filtered);
-  const distinctRounds = new Set(filtered.map((s) => Number(s.round_num)).filter(Boolean));
+  const hasPrima = filtered.some((s) => Number(s.round_num) === 1);
+  const hasDopo = filtered.some((s) => Number(s.round_num) === 2);
   const mixRoundsNote =
-    state.filterRound === "ALL" && distinctRounds.size > 1
-      ? " · mix di più prove (filtra Prova 2/3 in alto)"
+    state.filterRound === "ALL" && hasPrima && hasDopo
+      ? " · mix Prima + Dopo (filtra Prima o Dopo in alto)"
       : "";
 
   const kpis = [
@@ -423,7 +424,7 @@ function appendDeltaBadge(container, label, diff) {
   );
 }
 
-function buildRoundsSvgChart(matrix, activeRounds = [1, 2, 3]) {
+function buildRoundsSvgChart(matrix) {
   const ns = "http://www.w3.org/2000/svg";
   const width = 960;
   const height = 260;
@@ -438,7 +439,7 @@ function buildRoundsSvgChart(matrix, activeRounds = [1, 2, 3]) {
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
   svg.setAttribute("class", "rounds-svg");
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", "Grafico comparativo delle prove per categoria");
+  svg.setAttribute("aria-label", "Grafico comparativo Prima e Dopo per categoria");
 
   const makeSvgEl = (tag, attrs = {}, text = null) => {
     const node = document.createElementNS(ns, tag);
@@ -478,10 +479,12 @@ function buildRoundsSvgChart(matrix, activeRounds = [1, 2, 3]) {
     );
   }
 
+  const activeRounds = [1, 2];
   const groupW = plotW / CATEGORIES.length;
-  const roundColors = { 1: "#94a3b8", 2: "#38bdf8", 3: "#22c55e" };
-  const barW = activeRounds.length === 2 ? 64 : 46;
-  const gap = activeRounds.length === 2 ? 18 : 14;
+  const roundColors = { 1: "#38bdf8", 2: "#22c55e" };
+  const shortLabels = { 1: "Prima", 2: "Dopo" };
+  const barW = 68;
+  const gap = 20;
   const totalGroupBarsW = activeRounds.length * barW + (activeRounds.length - 1) * gap;
 
   CATEGORIES.forEach((cat, catIdx) => {
@@ -531,7 +534,7 @@ function buildRoundsSvgChart(matrix, activeRounds = [1, 2, 3]) {
             width: barW,
             height: barH,
             rx: 6,
-            fill: roundColors[rNum] || "#38bdf8"
+            fill: roundColors[rNum]
           })
         );
         svg.appendChild(
@@ -576,7 +579,7 @@ function buildRoundsSvgChart(matrix, activeRounds = [1, 2, 3]) {
             "font-weight": 700,
             "text-anchor": "middle"
           },
-          `P${rNum}`
+          shortLabels[rNum]
         )
       );
     });
@@ -592,8 +595,7 @@ function renderRoundsTab() {
   clearChildren(chartContainer);
   clearChildren(cardsGrid);
 
-  const hasRound1 = allRoundsItems.some((s) => Number(s.round_num) === 1);
-  const activeRounds = hasRound1 ? [1, 2, 3] : [2, 3];
+  const activeRounds = [1, 2];
 
   if (el["rounds-panel-title"] && el["rounds-panel-note"] && el["rounds-legend"]) {
     clearChildren(el["rounds-legend"]);
@@ -604,27 +606,18 @@ function renderRoundsTab() {
       el["rounds-legend"].appendChild(item);
     };
 
-    if (!hasRound1) {
-      el["rounds-panel-title"].textContent =
-        "Confronto Prova 2 (Primo Recupero) → Prova 3 (Secondo Recupero)";
-      el["rounds-panel-note"].textContent =
-        "La Prova 1 è solo memorizzazione. Qui confronti tenuta e variazione tra Prova 2 (Primo Recupero) e Prova 3 (Secondo Recupero).";
-      addLegendItem("swatch-r2", "Prova 2 · Primo recupero");
-      addLegendItem("swatch-r3", "Prova 3 · Secondo recupero");
-    } else {
-      el["rounds-panel-title"].textContent = "Progressione Prova 1 → Prova 2 → Prova 3";
-      el["rounds-panel-note"].textContent =
-        "Confronto della media % totale per categoria su tutte le prove della serata selezionata.";
-      addLegendItem("swatch-r1", "Prova 1 · Modalità unica");
-      addLegendItem("swatch-r2", "Prova 2 · Primo recupero");
-      addLegendItem("swatch-r3", "Prova 3 · Secondo recupero");
-    }
+    el["rounds-panel-title"].textContent =
+      "Confronto Prima (Senza tecniche) → Dopo (Con tecniche)";
+    el["rounds-panel-note"].textContent =
+      "Miglioramento medio (%) per categoria tra la prima consegna a freddo e la seconda consegna dopo le tecniche di memoria.";
+    addLegendItem("swatch-r1", "Prima · Senza tecniche");
+    addLegendItem("swatch-r2", "Dopo · Con tecniche");
   }
 
   const matrix = {};
   for (const cat of CATEGORIES) {
     matrix[cat.key] = {};
-    for (const rNum of [1, 2, 3]) {
+    for (const rNum of activeRounds) {
       const subset = allRoundsItems.filter(
         (s) => s.category === cat.key && Number(s.round_num) === rNum
       );
@@ -632,12 +625,11 @@ function renderRoundsTab() {
     }
   }
 
-  chartContainer.appendChild(buildRoundsSvgChart(matrix, activeRounds));
+  chartContainer.appendChild(buildRoundsSvgChart(matrix));
 
   const roundLabels = {
-    1: "Prova 1 · Modalità unica",
-    2: "Prova 2 · Primo recupero",
-    3: "Prova 3 · Secondo recupero"
+    1: "Prima · Senza tecniche",
+    2: "Dopo · Con tecniche"
   };
 
   for (const cat of CATEGORIES) {
@@ -647,26 +639,16 @@ function renderRoundsTab() {
 
     const r1 = matrix[cat.key][1].avgPctTotal;
     const r2 = matrix[cat.key][2].avgPctTotal;
-    const r3 = matrix[cat.key][3].avgPctTotal;
 
     const deltas = createEl("div", "delta-badges");
-    if (hasRound1) {
-      if (r1 !== null && r2 !== null) appendDeltaBadge(deltas, "P1→P2", r2 - r1);
-      if (r2 !== null && r3 !== null) appendDeltaBadge(deltas, "P2→P3", r3 - r2);
-      if (r1 !== null && r3 !== null) appendDeltaBadge(deltas, "P1→P3", r3 - r1);
-      if (!deltas.childElementCount) {
-        deltas.appendChild(createEl("span", "delta-badge delta-badge--flat", "In attesa prove"));
-      }
+    if (r1 !== null && r2 !== null) {
+      appendDeltaBadge(deltas, "Prima→Dopo", r2 - r1);
+    } else if (r1 !== null) {
+      deltas.appendChild(createEl("span", "delta-badge delta-badge--flat", "In attesa Dopo"));
+    } else if (r2 !== null) {
+      deltas.appendChild(createEl("span", "delta-badge delta-badge--flat", "Solo Dopo"));
     } else {
-      if (r2 !== null && r3 !== null) {
-        appendDeltaBadge(deltas, "P2→P3", r3 - r2);
-      } else if (r2 !== null) {
-        deltas.appendChild(createEl("span", "delta-badge delta-badge--flat", "In attesa Prova 3"));
-      } else if (r3 !== null) {
-        deltas.appendChild(createEl("span", "delta-badge delta-badge--flat", "Solo Prova 3"));
-      } else {
-        deltas.appendChild(createEl("span", "delta-badge delta-badge--flat", "In attesa consegne"));
-      }
+      deltas.appendChild(createEl("span", "delta-badge delta-badge--flat", "In attesa consegne"));
     }
 
     header.appendChild(deltas);
@@ -893,28 +875,49 @@ function getAppBaseUrl() {
   return new URL("./", window.location.href).href;
 }
 
+const QR_STAGE_CONFIG = {
+  "1_study": {
+    round: "1",
+    mode: "study",
+    label: "QR 1 · Memorizzazione 1 (Senza tecniche)"
+  },
+  "1_recall": {
+    round: "1",
+    mode: "recall",
+    label: "QR 2 · Test 1 — Prima consegna (Senza tecniche)"
+  },
+  "2_study": {
+    round: "2",
+    mode: "study",
+    label: "QR 3 · Memorizzazione 2 — Stesso file (Con tecniche)"
+  },
+  "2_recall": {
+    round: "2",
+    mode: "recall",
+    label: "QR 4 · Test 2 — Seconda consegna (Con tecniche)"
+  }
+};
+
 function buildParticipantUrl() {
   const rawSession = String(el["qr-session"].value || APP_CONFIG.defaultSession || "SERATA-1")
     .trim()
     .toUpperCase();
   const session = rawSession || "SERATA-1";
   const test = el["qr-test"].value === "B" ? "B" : "A";
-  const round = ["1", "2", "3"].includes(el["qr-round"].value) ? el["qr-round"].value : "1";
-  const rawMode = el["qr-mode"].value;
-  const mode = rawMode === "recall" ? "recall" : rawMode === "study" ? "study" : "full";
+  const stageKey = QR_STAGE_CONFIG[el["qr-stage"].value] ? el["qr-stage"].value : "1_study";
+  const stage = QR_STAGE_CONFIG[stageKey];
 
   const base = getAppBaseUrl();
   const params = new URLSearchParams({
     session,
     test,
-    round,
-    mode
+    round: stage.round,
+    mode: stage.mode
   });
   return {
     session,
     test,
-    round,
-    mode,
+    stage,
     url: `${base}?${params.toString()}`
   };
 }
@@ -930,14 +933,8 @@ function injectQrSvg(container, svgMarkup) {
 }
 
 function renderQrTab() {
-  const { session, test, round, mode, url } = buildParticipantUrl();
-  const modeLabel =
-    mode === "recall"
-      ? "Solo Recupero"
-      : mode === "study"
-      ? "Solo Memorizzazione"
-      : "Studio + Risposta";
-  const titleText = `${session} · Prova ${round} — Test ${test} (${modeLabel})`;
+  const { session, test, stage, url } = buildParticipantUrl();
+  const titleText = `${session} · Test ${test} — ${stage.label}`;
 
   el["qr-url-display"].textContent = url;
   el["qr-stage-badge"].textContent = titleText;
@@ -1349,17 +1346,7 @@ function bindEvents() {
     btn.addEventListener("click", () => switchTab(btn.dataset.tab));
   }
 
-  el["qr-round"].addEventListener("change", () => {
-    const r = el["qr-round"].value;
-    if (r === "1") {
-      el["qr-mode"].value = "study";
-    } else if (r === "2" || r === "3") {
-      el["qr-mode"].value = "recall";
-    }
-    renderQrTab();
-  });
-
-  for (const inputId of ["qr-session", "qr-test", "qr-mode"]) {
+  for (const inputId of ["qr-session", "qr-test", "qr-stage"]) {
     el[inputId].addEventListener("input", renderQrTab);
     el[inputId].addEventListener("change", renderQrTab);
   }

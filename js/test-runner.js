@@ -415,12 +415,30 @@ function renderOnboarding() {
   const nicknameValue = attempt.participant?.nickname || "";
 
   const totalSecCount = enabledSections.length;
-  const modeBadge =
-    mode === "recall"
-      ? `<span class="chip chip-recall-mode">Solo Recupero</span>`
-      : mode === "study"
-      ? `<span class="chip chip-primary">Solo Memorizzazione (Prova 1)</span>`
-      : `<span class="chip chip-primary">Studio + Risposta</span>`;
+  let modeBadge = `<span class="chip chip-primary">Studio + Risposta</span>`;
+  let showRoundChip = true;
+
+  if (mode === "study") {
+    if (round === 1) {
+      modeBadge = `<span class="chip chip-primary">Memorizzazione 1 · Senza tecniche</span>`;
+      showRoundChip = false;
+    } else if (round === 2) {
+      modeBadge = `<span class="chip chip-primary">Memorizzazione 2 · Con tecniche</span>`;
+      showRoundChip = false;
+    } else {
+      modeBadge = `<span class="chip chip-primary">Solo Memorizzazione</span>`;
+    }
+  } else if (mode === "recall") {
+    if (round === 1) {
+      modeBadge = `<span class="chip chip-recall-mode">Test 1 · Prima (Senza tecniche)</span>`;
+      showRoundChip = false;
+    } else if (round === 2) {
+      modeBadge = `<span class="chip chip-recall-mode">Test 2 · Dopo (Con tecniche)</span>`;
+      showRoundChip = false;
+    } else {
+      modeBadge = `<span class="chip chip-recall-mode">Solo Recupero</span>`;
+    }
+  }
 
   const syncBadge = demo
     ? `<span class="chip chip-demo">Modalità Demo Locale</span>`
@@ -453,7 +471,7 @@ function renderOnboarding() {
       <div class="meta-chips">
         <span class="chip chip-primary">Serata ${escapeHtml(session)}</span>
         <span class="chip">Test ${escapeHtml(test)}</span>
-        <span class="chip">Prova ${round}</span>
+        ${showRoundChip ? `<span class="chip">Prova ${round}</span>` : ""}
         ${modeBadge}
         ${syncBadge}
       </div>
@@ -1984,13 +2002,19 @@ function renderCompletedStudyView() {
   const durationLabel = `${mins}m ${String(secs).padStart(2, "0")}s`;
   const catLabel = CATEGORY_SHORT[attempt.participant?.category] || attempt.participant?.category || "";
   const nick = attempt.participant?.nickname;
+  const studyStageChip =
+    round === 1
+      ? "Memorizzazione 1 · Senza tecniche"
+      : round === 2
+      ? "Memorizzazione 2 · Con tecniche"
+      : `Memorizzazione · Prova ${round}`;
 
   rootEl.innerHTML = `
     <section class="card score-hero stack-md">
       <div class="meta-chips" style="justify-content: center;">
         <span class="chip chip-primary">Serata ${escapeHtml(session)}</span>
-        <span class="chip">Test ${escapeHtml(test)} · Prova ${round}</span>
-        <span class="chip chip-primary">Solo Memorizzazione</span>
+        <span class="chip">Test ${escapeHtml(test)}</span>
+        <span class="chip chip-primary">${escapeHtml(studyStageChip)}</span>
         ${catLabel ? `<span class="chip">${escapeHtml(catLabel)}</span>` : ""}
         ${nick ? `<span class="chip">${escapeHtml(nick)}</span>` : ""}
       </div>
@@ -2001,7 +2025,7 @@ function renderCompletedStudyView() {
       </p>
 
       <div class="notice-box" style="text-align: left;">
-        Non devi scrivere altro adesso. Attendi il prossimo <strong>QR Code</strong> proiettato dallo speaker per la prova di recupero: il tuo profilo resta salvato su questo telefono.
+        Non devi scrivere altro adesso. Attendi il prossimo <strong>QR Code</strong> proiettato dallo speaker per fare il test di verifica: il tuo profilo resta salvato su questo telefono.
       </div>
     </section>
   `;
@@ -2130,10 +2154,17 @@ function renderCompletedView(scoreResult) {
       .map((entry) => {
         const isCurrent =
           Number(entry.round_num) === Number(round) && String(entry.test_id) === String(test);
+        const rNum = Number(entry.round_num);
+        const rowLabel =
+          rNum === 1
+            ? "Prima (Senza tecniche)"
+            : rNum === 2
+            ? "Dopo (Con tecniche)"
+            : `Prova ${escapeHtml(entry.round_num)}`;
         return `
           <div class="progression-item ${isCurrent ? "current" : ""}">
             <div>
-              <strong>Prova ${escapeHtml(entry.round_num)}</strong>
+              <strong>${rowLabel}</strong>
               <span class="helper-text"> · Test ${escapeHtml(entry.test_id)}</span>
             </div>
             <div>
@@ -2158,6 +2189,12 @@ function renderCompletedView(scoreResult) {
 
   const catLabel = CATEGORY_SHORT[attempt.participant?.category] || attempt.participant?.category || "";
   const nick = attempt.participant?.nickname;
+  const heroPhaseLabel =
+    round === 1
+      ? "Prima (Senza tecniche)"
+      : round === 2
+      ? "Dopo (Con tecniche)"
+      : `Prova ${round}`;
 
   // STRICT RULE: NEVER render any exact answers, digits, words, vocab translations, years, or math solutions here!
   rootEl.innerHTML = `
@@ -2168,7 +2205,7 @@ function renderCompletedView(scoreResult) {
     <section class="card score-hero">
       <div class="meta-chips" style="justify-content: center;">
         <span class="chip chip-primary">Serata ${escapeHtml(session)}</span>
-        <span class="chip">Test ${escapeHtml(test)} · Prova ${round}</span>
+        <span class="chip">Test ${escapeHtml(test)} · ${escapeHtml(heroPhaseLabel)}</span>
         ${catLabel ? `<span class="chip">${escapeHtml(catLabel)}</span>` : ""}
         ${nick ? `<span class="chip">${escapeHtml(nick)}</span>` : ""}
       </div>
@@ -2220,7 +2257,7 @@ function renderCompletedView(scoreResult) {
     ${progressionHtml}
 
     <p class="footer-hint">
-      Le soluzioni non vengono mostrate sullo smartphone durante la serata. Attendi le indicazioni del formatore per i round successivi.
+      Le soluzioni non vengono mostrate sullo smartphone durante la serata. Attendi le indicazioni del formatore.
     </p>
   `;
 

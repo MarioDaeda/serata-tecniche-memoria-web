@@ -93,12 +93,11 @@
         </div>
 
         <div class="control-group">
-          <label for="filter-round" class="control-label">Round</label>
-          <select id="filter-round" aria-label="Filtra per round">
-            <option value="ALL">Tutte</option>
-            <option value="1">Prova 1 (Full)</option>
-            <option value="2">Prova 2 (Recupero 1)</option>
-            <option value="3">Prova 3 (Recupero 2)</option>
+          <label for="filter-round" class="control-label">Fase</label>
+          <select id="filter-round" aria-label="Filtra per fase">
+            <option value="ALL">Tutte (Prima + Dopo)</option>
+            <option value="1">Prima (Senza tecniche)</option>
+            <option value="2">Dopo (Con tecniche)</option>
           </select>
         </div>
 
@@ -156,7 +155,7 @@
           aria-selected="false"
           aria-controls="panel-rounds"
         >
-          2. Confronto Prove
+          2. Confronto Prima → Dopo
         </button>
         <button
           type="button"
@@ -190,18 +189,18 @@
         <div id="live-categories-grid" class="categories-grid"></div>
       </section>
 
-      <!-- TAB 2: CONFRONTO ROUND 1 -> 2 -> 3 -->
+      <!-- TAB 2: CONFRONTO PRIMA -> DOPO -->
       <section id="panel-rounds" class="tab-panel" role="tabpanel" aria-labelledby="tab-rounds" hidden>
         <div class="panel-header-row">
           <div>
-            <h2 id="rounds-panel-title" class="panel-title">Confronto Prova 2 (Primo Recupero) → Prova 3 (Secondo Recupero)</h2>
+            <h2 id="rounds-panel-title" class="panel-title">Confronto Prima (Senza tecniche) → Dopo (Con tecniche)</h2>
             <p id="rounds-panel-note" class="panel-note">
-              Confronto della media % totale per categoria tra le prove della serata selezionata.
+              Miglioramento medio (%) per categoria tra la prima consegna a freddo e la seconda consegna dopo le tecniche di memoria.
             </p>
           </div>
           <div id="rounds-legend" class="round-legend" aria-hidden="true">
-            <span class="legend-item"><i class="swatch swatch-r2"></i>Prova 2 · Primo recupero</span>
-            <span class="legend-item"><i class="swatch swatch-r3"></i>Prova 3 · Secondo recupero</span>
+            <span class="legend-item"><i class="swatch swatch-r1"></i>Prima · Senza tecniche</span>
+            <span class="legend-item"><i class="swatch swatch-r2"></i>Dopo · Con tecniche</span>
           </div>
         </div>
         <div id="rounds-chart-container" class="rounds-chart-card"></div>
@@ -228,12 +227,11 @@
               </select>
             </div>
             <div class="control-group">
-              <label for="section-filter-round" class="control-label">Round</label>
+              <label for="section-filter-round" class="control-label">Fase</label>
               <select id="section-filter-round">
-                <option value="ALL">Tutte le prove</option>
-                <option value="1">Prova 1 (Full)</option>
-                <option value="2">Prova 2 (Recupero 1)</option>
-                <option value="3">Prova 3 (Recupero 2)</option>
+                <option value="ALL">Prima + Dopo</option>
+                <option value="1">Prima (Senza tecniche)</option>
+                <option value="2">Dopo (Con tecniche)</option>
               </select>
             </div>
           </div>
@@ -249,7 +247,7 @@
           <div class="qr-config-card">
             <h2 class="panel-title">Configura Link &amp; QR della Prova</h2>
             <p class="panel-note">
-              Seleziona serata, batteria e modalità: il QR Code si rigenera istantaneamente in locale senza dipendenze esterne.
+              Seleziona serata, batteria e momento della serata: il QR Code si rigenera istantaneamente in locale senza dipendenze esterne.
             </p>
 
             <div class="qr-form-grid">
@@ -266,21 +264,13 @@
                 </select>
               </div>
 
-              <div class="control-group">
-                <label for="qr-round" class="control-label">Round / Prova</label>
-                <select id="qr-round">
-                  <option value="1">Prova 1 (Memorizzazione)</option>
-                  <option value="2">Prova 2 (Recupero 1)</option>
-                  <option value="3">Prova 3 (Recupero 2)</option>
-                </select>
-              </div>
-
-              <div class="control-group">
-                <label for="qr-mode" class="control-label">Modalità</label>
-                <select id="qr-mode">
-                  <option value="study">study · Solo Memorizzazione (Prova 1)</option>
-                  <option value="recall">recall · Solo Recupero (Prova 2 e 3)</option>
-                  <option value="full">full · Studio + Risposta (unico)</option>
+              <div class="control-group" style="grid-column: 1 / -1;">
+                <label for="qr-stage" class="control-label">Momento / QR da proiettare</label>
+                <select id="qr-stage">
+                  <option value="1_study">QR 1 · Memorizzazione 1 (Senza tecniche)</option>
+                  <option value="1_recall">QR 2 · Test 1 — Prima consegna (Senza tecniche)</option>
+                  <option value="2_study">QR 3 · Memorizzazione 2 — Stesso file (Con tecniche)</option>
+                  <option value="2_recall">QR 4 · Test 2 — Seconda consegna (Con tecniche)</option>
                 </select>
               </div>
             </div>
