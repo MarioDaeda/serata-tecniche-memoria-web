@@ -1,0 +1,19 @@
+# File di sistema e cache editor
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+
+# Variabili locali e log
+.env
+.env.local
+.env.*.local
+*.log
+
+# Cache Python / Node temporanee
+__pycache__/
+*.py[cod]
+node_modules/
+.venv/

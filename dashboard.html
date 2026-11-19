@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Regia Live — Serata Tecniche di Memoria</title>
+  <link rel="stylesheet" href="./css/dashboard.css">
+</head>
+<body>
+  <!-- SCHERMATA DI ACCESSO CON PIN FORMATORE -->
+  <main id="pin-screen" class="pin-screen">
+    <section class="pin-card" aria-labelledby="pin-title">
+      <div class="pin-brand">
+        <span class="brand-kicker">Serata Tecniche di Memoria</span>
+        <h1 id="pin-title">Regia Live Proiettabile</h1>
+      </div>
+
+      <div id="login-mode-badge" class="mode-badge mode-badge--demo" aria-live="polite">
+        Modalità Demo Locale (PIN: 1234)
+      </div>
+
+      <p id="login-mode-desc" class="pin-desc">
+        I risultati vengono letti localmente dal browser. Inserisci il PIN formatore per aprire la regia.
+      </p>
+
+      <form id="pin-form" class="pin-form" novalidate>
+        <label for="pin-input" class="field-label">PIN Formatore</label>
+        <div class="pin-input-row">
+          <input
+            id="pin-input"
+            name="pin"
+            type="password"
+            inputmode="numeric"
+            autocomplete="off"
+            placeholder="Inserisci PIN..."
+            required
+          >
+          <button type="button" id="btn-toggle-pin" class="btn btn-ghost btn-sm" aria-label="Mostra o nascondi PIN">
+            Mostra
+          </button>
+        </div>
+
+        <div id="pin-error" class="alert-error" role="alert" hidden></div>
+
+        <button type="submit" id="btn-pin-submit" class="btn btn-primary btn-lg">
+          Accedi alla Regia
+        </button>
+      </form>
+    </section>
+  </main>
+
+  <!-- REGIA LIVE PRINCIPALE -->
+  <div id="dashboard-shell" class="dashboard-shell" hidden>
+    <header class="regia-header">
+      <div class="header-top-row">
+        <div class="header-brand">
+          <div>
+            <h1 class="header-title">Regia Live</h1>
+            <p class="header-subtitle">Analisi comparativa in tempo reale · Ricordo &amp; Comprensione</p>
+          </div>
+          <span id="header-mode-badge" class="mode-badge mode-badge--demo">
+            Modalità Demo Locale (PIN: 1234)
+          </span>
+        </div>
+
+        <div class="header-stats">
+          <span class="stat-pill" title="Consegne corrispondenti ai filtri attivi">
+            Consegne: <strong id="live-submissions-count">0</strong>
+          </span>
+          <span class="stat-pill" title="Partecipanti distinti">
+            Partecipanti: <strong id="live-participants-count">0</strong>
+          </span>
+          <span class="stat-pill stat-pill--muted" id="last-refresh-time">
+            Agg. —
+          </span>
+        </div>
+      </div>
+
+      <div class="header-controls-row">
+        <div class="control-group control-group--session">
+          <label for="session-select" class="control-label">Serata</label>
+          <div class="session-inputs">
+            <select id="session-select" aria-label="Seleziona serata"></select>
+            <input
+              id="session-manual"
+              type="text"
+              maxlength="48"
+              placeholder="Codice serata (es. SERATA-1)"
+              aria-label="Inserisci codice serata manualmente"
+            >
+            <button type="button" id="btn-apply-session" class="btn btn-secondary btn-sm">Applica</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="filter-round" class="control-label">Round</label>
+          <select id="filter-round" aria-label="Filtra per round">
+            <option value="ALL">Tutti</option>
+            <option value="1">Round 1</option>
+            <option value="2">Round 2</option>
+            <option value="3">Round 3</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="filter-test" class="control-label">Test</label>
+          <select id="filter-test" aria-label="Filtra per test">
+            <option value="ALL">Tutti</option>
+            <option value="A">Test A</option>
+            <option value="B">Test B</option>
+          </select>
+        </div>
+
+        <div class="header-actions">
+          <button type="button" id="btn-autorefresh" class="btn btn-toggle is-on" aria-pressed="true">
+            Auto-refresh (4s): ON
+          </button>
+          <button type="button" id="btn-refresh-now" class="btn btn-secondary">
+            Aggiorna ora
+          </button>
+          <button type="button" id="btn-seed-demo" class="btn btn-amber" hidden>
+            Popola dati demo
+          </button>
+          <button type="button" id="btn-export-csv" class="btn btn-secondary">
+            Esporta CSV
+          </button>
+          <button type="button" id="btn-fullscreen" class="btn btn-secondary">
+            Schermo intero
+          </button>
+          <button type="button" id="btn-logout" class="btn btn-ghost">
+            Blocca
+          </button>
+        </div>
+      </div>
+
+      <div id="dashboard-banner" class="dashboard-banner" role="status" hidden></div>
+
+      <nav class="tab-bar" role="tablist" aria-label="Viste della Regia Live">
+        <button
+          type="button"
+          class="tab-btn is-active"
+          id="tab-live"
+          data-tab="live"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panel-live"
+        >
+          1. Live per Categorie
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          id="tab-rounds"
+          data-tab="rounds"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-rounds"
+        >
+          2. Confronto Round (1 → 2 → 3)
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          id="tab-sections"
+          data-tab="sections"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-sections"
+        >
+          3. Dettaglio per Prova
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          id="tab-qr"
+          data-tab="qr"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-qr"
+        >
+          4. QR Code Proiettabile
+        </button>
+      </nav>
+    </header>
+
+    <main class="dashboard-main">
+      <!-- TAB 1: LIVE PER CATEGORIE -->
+      <section id="panel-live" class="tab-panel is-active" role="tabpanel" aria-labelledby="tab-live">
+        <div id="live-kpi-strip" class="kpi-strip"></div>
+        <div id="live-categories-grid" class="categories-grid"></div>
+      </section>
+
+      <!-- TAB 2: CONFRONTO ROUND 1 -> 2 -> 3 -->
+      <section id="panel-rounds" class="tab-panel" role="tabpanel" aria-labelledby="tab-rounds" hidden>
+        <div class="panel-header-row">
+          <div>
+            <h2 class="panel-title">Progressione Round 1 → Round 2 → Round 3</h2>
+            <p class="panel-note">
+              Confronto della media % totale per categoria su tutti i round della serata selezionata.
+            </p>
+          </div>
+          <div class="round-legend" aria-hidden="true">
+            <span class="legend-item"><i class="swatch swatch-r1"></i>Round 1 (A freddo)</span>
+            <span class="legend-item"><i class="swatch swatch-r2"></i>Round 2 (Post-tecniche)</span>
+            <span class="legend-item"><i class="swatch swatch-r3"></i>Round 3 (Ritest post-pausa)</span>
+          </div>
+        </div>
+        <div id="rounds-chart-container" class="rounds-chart-card"></div>
+        <div id="rounds-cards-grid" class="rounds-cards-grid"></div>
+      </section>
+
+      <!-- TAB 3: DETTAGLIO PER PROVA -->
+      <section id="panel-sections" class="tab-panel" role="tabpanel" aria-labelledby="tab-sections" hidden>
+        <div class="panel-header-row">
+          <div>
+            <h2 class="panel-title">Dettaglio delle 6 Prove</h2>
+            <p class="panel-note">
+              Prestazioni medie per sezione, inclusa la resa sui vocaboli non conosciuti in partenza.
+            </p>
+          </div>
+          <div class="section-filters">
+            <div class="control-group">
+              <label for="section-filter-category" class="control-label">Categoria</label>
+              <select id="section-filter-category">
+                <option value="ALL">Tutte le categorie</option>
+                <option value="weekend">Corso questo weekend</option>
+                <option value="mesi_fa">Corso mesi fa</option>
+                <option value="nessun_corso">Nessun corso</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label for="section-filter-round" class="control-label">Round</label>
+              <select id="section-filter-round">
+                <option value="ALL">Tutti i round</option>
+                <option value="1">Round 1</option>
+                <option value="2">Round 2</option>
+                <option value="3">Round 3</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="sections-bars-list" class="sections-bars-list"></div>
+        <div id="sections-matrix-wrap" class="matrix-card"></div>
+      </section>
+
+      <!-- TAB 4: QR CODE PROIETTABILE -->
+      <section id="panel-qr" class="tab-panel" role="tabpanel" aria-labelledby="tab-qr" hidden>
+        <div class="qr-layout">
+          <div class="qr-config-card">
+            <h2 class="panel-title">Configura Link &amp; QR della Prova</h2>
+            <p class="panel-note">
+              Seleziona serata, batteria e modalità: il QR Code si rigenera istantaneamente in locale senza dipendenze esterne.
+            </p>
+
+            <div class="qr-form-grid">
+              <div class="control-group">
+                <label for="qr-session" class="control-label">Codice Serata</label>
+                <input id="qr-session" type="text" maxlength="48" value="SERATA-1">
+              </div>
+
+              <div class="control-group">
+                <label for="qr-test" class="control-label">Test</label>
+                <select id="qr-test">
+                  <option value="A">Test A (Batteria Iniziale)</option>
+                  <option value="B">Test B (Batteria Parallela)</option>
+                </select>
+              </div>
+
+              <div class="control-group">
+                <label for="qr-round" class="control-label">Round</label>
+                <select id="qr-round">
+                  <option value="1">Round 1 (Iniziale)</option>
+                  <option value="2">Round 2 (Post-tecniche)</option>
+                  <option value="3">Round 3 (Ritest post-pausa)</option>
+                </select>
+              </div>
+
+              <div class="control-group">
+                <label for="qr-mode" class="control-label">Modalità</label>
+                <select id="qr-mode">
+                  <option value="full">full · Studio + Risposta</option>
+                  <option value="recall">recall · Solo Risposta</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="qr-url-box">
+              <span class="control-label">URL generato per i partecipanti</span>
+              <code id="qr-url-display" class="qr-url-code"></code>
+            </div>
+
+            <div class="qr-actions">
+              <button type="button" id="btn-qr-fullscreen" class="btn btn-primary btn-lg">
+                Proietta a tutto schermo
+              </button>
+              <button type="button" id="btn-copy-wa-link" class="btn btn-secondary btn-lg">
+                Copia link per WhatsApp
+              </button>
+            </div>
+            <div id="qr-copy-feedback" class="copy-feedback" role="status" aria-live="polite"></div>
+          </div>
+
+          <div class="qr-stage-card">
+            <div id="qr-stage-badge" class="qr-stage-badge">SERATA-1 · Test A · Round 1</div>
+            <div id="qr-preview-container" class="qr-white-frame" aria-label="Anteprima QR Code"></div>
+            <p class="qr-stage-hint">Inquadra con la fotocamera dello smartphone per avviare la prova.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL PROIEZIONE QR A TUTTO SCHERMO -->
+  <div id="qr-modal" class="qr-modal" role="dialog" aria-modal="true" aria-labelledby="qr-modal-title" hidden>
+    <button type="button" id="btn-close-qr-modal" class="btn btn-secondary qr-modal-close">
+      Chiudi (ESC)
+    </button>
+    <div class="qr-modal-content">
+      <h2 id="qr-modal-title" class="qr-modal-title">Round 1 — Test A (Studio + Risposta)</h2>
+      <p class="qr-modal-instruction">Inquadra il QR Code con la fotocamera del telefono</p>
+      <div id="qr-modal-svg-container" class="qr-modal-frame"></div>
+      <div id="qr-modal-url" class="qr-modal-url"></div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/dashboard.js"></script>
+</body>
+</html>
