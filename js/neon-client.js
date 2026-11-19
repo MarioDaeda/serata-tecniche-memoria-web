@@ -240,17 +240,12 @@ async function postSubmissionToNeon(record) {
     });
   };
 
-  let res = await doPost("return=representation", false);
+  // Usa direttamente Prefer: return=minimal perché anonymous ha solo INSERT (nessun SELECT per privacy RLS)
+  let res = await doPost("return=minimal", false);
 
   // Se il token anonimo è scaduto, rigenera una volta
   if (res.status === 401 && trimTrailingSlash(APP_CONFIG.neonAuthUrl)) {
-    res = await doPost("return=representation", true);
-  }
-
-  // Postgres RLS: se anonymous ha INSERT ma NON ha SELECT (privacy partecipanti),
-  // PostgREST con `return=representation` può rifiutare RETURNING *. Fallback a `return=minimal`.
-  if (res.status === 401 || res.status === 403) {
-    res = await doPost("return=minimal", false);
+    res = await doPost("return=minimal", true);
   }
 
   if (!res.ok) {
