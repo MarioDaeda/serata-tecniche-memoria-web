@@ -424,14 +424,20 @@ function appendDeltaBadge(container, label, diff) {
   );
 }
 
+const CHART_CATEGORY_ORDER = [
+  { key: "nessun_corso", label: "Nessun corso", shortLabel: "Nessun corso", color: "#f472b6" },
+  { key: "weekend", label: "Corso questo weekend", shortLabel: "Corso weekend", color: "#38bdf8" },
+  { key: "mesi_fa", label: "Corso mesi fa", shortLabel: "Corso mesi fa", color: "#f59e0b" }
+];
+
 function buildRoundsSvgChart(matrix) {
   const ns = "http://www.w3.org/2000/svg";
   const width = 960;
-  const height = 260;
+  const height = 276;
   const padLeft = 58;
   const padRight = 24;
-  const padTop = 24;
-  const padBottom = 46;
+  const padTop = 26;
+  const padBottom = 56;
   const plotW = width - padLeft - padRight;
   const plotH = height - padTop - padBottom;
 
@@ -439,7 +445,7 @@ function buildRoundsSvgChart(matrix) {
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
   svg.setAttribute("class", "rounds-svg");
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", "Grafico comparativo Prima e Dopo per categoria");
+  svg.setAttribute("aria-label", "Grafico comparativo Prima (3 categorie) e Dopo (3 categorie)");
 
   const makeSvgEl = (tag, attrs = {}, text = null) => {
     const node = document.createElementNS(ns, tag);
@@ -479,16 +485,32 @@ function buildRoundsSvgChart(matrix) {
     );
   }
 
-  const activeRounds = [1, 2];
-  const groupW = plotW / CATEGORIES.length;
-  const roundColors = { 1: "#38bdf8", 2: "#22c55e" };
-  const shortLabels = { 1: "Prima", 2: "Dopo" };
-  const barW = 68;
-  const gap = 20;
-  const totalGroupBarsW = activeRounds.length * barW + (activeRounds.length - 1) * gap;
+  // Separatore verticale discreto tra blocco PRIMA e blocco DOPO
+  const midX = padLeft + plotW / 2;
+  svg.appendChild(
+    makeSvgEl("line", {
+      x1: midX,
+      y1: padTop - 4,
+      x2: midX,
+      y2: padTop + plotH + 34,
+      stroke: "#334155",
+      "stroke-width": 1.5,
+      "stroke-dasharray": "5 5"
+    })
+  );
 
-  CATEGORIES.forEach((cat, catIdx) => {
-    const groupCenterX = padLeft + groupW * (catIdx + 0.5);
+  const phases = [
+    { rNum: 1, title: "PRIMA · Senza tecniche" },
+    { rNum: 2, title: "DOPO · Con tecniche" }
+  ];
+
+  const groupW = plotW / phases.length;
+  const barW = 86;
+  const gap = 24;
+  const totalGroupBarsW = CHART_CATEGORY_ORDER.length * barW + (CHART_CATEGORY_ORDER.length - 1) * gap;
+
+  phases.forEach((phase, pIdx) => {
+    const groupCenterX = padLeft + groupW * (pIdx + 0.5);
     const startX = groupCenterX - totalGroupBarsW / 2;
 
     svg.appendChild(
@@ -496,20 +518,20 @@ function buildRoundsSvgChart(matrix) {
         "text",
         {
           x: groupCenterX,
-          y: height - 14,
-          fill: "#f8fafc",
+          y: height - 10,
+          fill: phase.rNum === 2 ? "#86efac" : "#f8fafc",
           "font-size": 15,
           "font-weight": 800,
           "text-anchor": "middle"
         },
-        cat.label
+        phase.title
       )
     );
 
-    activeRounds.forEach((rNum, rIdx) => {
-      const cell = matrix[cat.key][rNum];
+    CHART_CATEGORY_ORDER.forEach((cat, cIdx) => {
+      const cell = matrix[cat.key][phase.rNum];
       const val = cell.avgPctTotal;
-      const barX = startX + rIdx * (barW + gap);
+      const barX = startX + cIdx * (barW + gap);
       const barH = val === null ? 0 : Math.max(4, (val / 100) * plotH);
       const barY = padTop + plotH - barH;
 
@@ -534,7 +556,7 @@ function buildRoundsSvgChart(matrix) {
             width: barW,
             height: barH,
             rx: 6,
-            fill: roundColors[rNum]
+            fill: cat.color
           })
         );
         svg.appendChild(
@@ -544,7 +566,7 @@ function buildRoundsSvgChart(matrix) {
               x: barX + barW / 2,
               y: Math.max(padTop + 14, barY - 6),
               fill: "#f8fafc",
-              "font-size": 13,
+              "font-size": 14,
               "font-weight": 800,
               "text-anchor": "middle"
             },
@@ -573,13 +595,13 @@ function buildRoundsSvgChart(matrix) {
           "text",
           {
             x: barX + barW / 2,
-            y: padTop + plotH + 16,
-            fill: "#94a3b8",
-            "font-size": 11,
+            y: padTop + plotH + 17,
+            fill: "#cbd5e1",
+            "font-size": 11.5,
             "font-weight": 700,
             "text-anchor": "middle"
           },
-          shortLabels[rNum]
+          cat.shortLabel
         )
       );
     });
@@ -599,9 +621,11 @@ function renderRoundsTab() {
 
   if (el["rounds-panel-title"] && el["rounds-panel-note"] && el["rounds-legend"]) {
     clearChildren(el["rounds-legend"]);
-    const addLegendItem = (swatchClass, label) => {
+    const addLegendColor = (hexColor, label) => {
       const item = createEl("span", "legend-item");
-      item.appendChild(createEl("i", `swatch ${swatchClass}`));
+      const sw = createEl("i", "swatch");
+      sw.style.background = hexColor;
+      item.appendChild(sw);
       item.appendChild(document.createTextNode(label));
       el["rounds-legend"].appendChild(item);
     };
@@ -609,9 +633,10 @@ function renderRoundsTab() {
     el["rounds-panel-title"].textContent =
       "Confronto Prima (Senza tecniche) → Dopo (Con tecniche)";
     el["rounds-panel-note"].textContent =
-      "Miglioramento medio (%) per categoria tra la prima consegna a freddo e la seconda consegna dopo le tecniche di memoria.";
-    addLegendItem("swatch-r1", "Prima · Senza tecniche");
-    addLegendItem("swatch-r2", "Dopo · Con tecniche");
+      "A sinistra i 3 gruppi nel test PRIMA (senza tecniche), a destra gli stessi 3 gruppi nel test DOPO (con tecniche).";
+    for (const cat of CHART_CATEGORY_ORDER) {
+      addLegendColor(cat.color, cat.label);
+    }
   }
 
   const matrix = {};
