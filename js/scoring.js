@@ -337,6 +337,28 @@ function scoreVocabSection(section, rawAnswer) {
 
 function scoreMathSection(section, rawAnswer) {
   const ans = rawAnswer && typeof rawAnswer === "object" ? rawAnswer : {};
+  const maxRecall = Number(section.maxRecallPoints) || 0;
+  const maxComp = Number(section.maxComprehensionPoints) || 0;
+  const max = maxRecall + maxComp;
+
+  if (ans.freeDrawMode || ans.selfEval === "correct" || ans.selfEval === "wrong" || ans.subPhase === "selfcheck") {
+    const isCorrect = ans.selfEval === "correct";
+    const recallPts = isCorrect ? maxRecall : 0;
+    const compPts = isCorrect ? maxComp : 0;
+    const score = round1(recallPts + compPts);
+    return {
+      score,
+      max,
+      pct: pct(score, max),
+      recall: round1(recallPts),
+      maxRecall,
+      comp: round1(compPts),
+      maxComp,
+      usedPaper: Boolean(ans.usedPaper),
+      selfEval: ans.selfEval || null
+    };
+  }
+
   const recallAnswers = ans.recallAnswers && typeof ans.recallAnswers === "object" ? ans.recallAnswers : {};
 
   let recall = 0;
@@ -371,9 +393,6 @@ function scoreMathSection(section, rawAnswer) {
     }
   }
 
-  const maxRecall = Number(section.maxRecallPoints) || 0;
-  const maxComp = Number(section.maxComprehensionPoints) || 0;
-  const max = maxRecall + maxComp;
   const score = round1(recall + comp);
 
   return {

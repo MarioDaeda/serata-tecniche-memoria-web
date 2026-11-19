@@ -129,14 +129,18 @@ export function resolveAttemptOnLoad(attempt, enabledSections, mode, now = Date.
         phaseEndsAt = phaseStartedAt + (Number(currentSec.recallSeconds) || 120) * 1000;
       }
     } else if (phase === "recall") {
-      // Per chimica a disegno libero: allo scadere del timer di disegno passa a selfcheck e attende conferma
-      if (currentSec?.type === "chemistry" && currentSec?.mode === "free_draw_selfcheck") {
+      // Per chimica (e matematica in Prova 2) a disegno libero: allo scadere del timer passa a selfcheck e attende conferma
+      const isFreeDrawSection =
+        (currentSec?.type === "chemistry" && currentSec?.mode === "free_draw_selfcheck") ||
+        (currentSec?.type === "math" && Number(attempt.round) === 2 && mode === "recall");
+      if (isFreeDrawSection) {
         const chemAns = answers[currentSec.id] && typeof answers[currentSec.id] === "object"
           ? answers[currentSec.id]
           : {};
         if (chemAns.subPhase !== "selfcheck") {
           answers[currentSec.id] = {
             ...chemAns,
+            freeDrawMode: currentSec?.type === "math" ? true : chemAns.freeDrawMode,
             subPhase: "selfcheck"
           };
           changed = true;

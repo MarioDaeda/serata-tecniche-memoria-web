@@ -166,6 +166,25 @@ function ensureSectionAnswerContainer(section) {
       break;
     }
     case "math": {
+      if (isMathFreeDrawMode(section)) {
+        if (!existing || typeof existing !== "object" || !("subPhase" in existing)) {
+          ctx.attempt.answers[section.id] = {
+            freeDrawMode: true,
+            subPhase: "draw",
+            drawingDataUrl: "",
+            photoDataUrl: "",
+            usedPaper: false,
+            selfEval: null
+          };
+        } else {
+          existing.freeDrawMode = true;
+          if (existing.subPhase !== "selfcheck") existing.subPhase = "draw";
+          if (typeof existing.drawingDataUrl !== "string") existing.drawingDataUrl = "";
+          if (typeof existing.photoDataUrl !== "string") existing.photoDataUrl = "";
+          existing.usedPaper = Boolean(existing.usedPaper);
+        }
+        break;
+      }
       if (!existing || typeof existing !== "object") {
         ctx.attempt.answers[section.id] = {
           recallAnswers: {},
@@ -189,8 +208,22 @@ function ensureSectionAnswerContainer(section) {
   return ctx.attempt.answers[section.id];
 }
 
+function isMathFreeDrawMode(section) {
+  return Boolean(
+    section &&
+    section.type === "math" &&
+    ctx &&
+    Number(ctx.round) === 2 &&
+    ctx.mode === "recall"
+  );
+}
+
 function isChemistrySelfCheckActive(section, phase) {
-  if (phase !== "recall" || !section || section.type !== "chemistry") return false;
+  if (phase !== "recall" || !section) return false;
+  if (isMathFreeDrawMode(section)) {
+    return ctx?.attempt?.answers?.[section.id]?.subPhase === "selfcheck";
+  }
+  if (section.type !== "chemistry") return false;
   if (section.mode !== "free_draw_selfcheck" && (section.variantQuestion || Array.isArray(section.detailQuestions))) {
     return false;
   }
@@ -301,7 +334,7 @@ function startPhaseTimer(section, phase) {
 }
 
 function captureChemCanvasSnapshot(section) {
-  if (!section || section.type !== "chemistry") return;
+  if (!section || (section.type !== "chemistry" && !isMathFreeDrawMode(section))) return;
   const canvas = document.getElementById("chem-canvas");
   if (!canvas || !ctx?.attempt?.answers?.[section.id]) return;
   const chemAns = ctx.attempt.answers[section.id];
@@ -322,8 +355,11 @@ function handlePhaseTimeout() {
     const currentSec = getCurrentSection();
     if (
       ctx.attempt.phase === "recall" &&
-      currentSec?.type === "chemistry" &&
-      (currentSec.mode === "free_draw_selfcheck" || (!currentSec.variantQuestion && !Array.isArray(currentSec.detailQuestions)))
+      (
+        (currentSec?.type === "chemistry" &&
+          (currentSec.mode === "free_draw_selfcheck" || (!currentSec.variantQuestion && !Array.isArray(currentSec.detailQuestions)))) ||
+        isMathFreeDrawMode(currentSec)
+      )
     ) {
       const chemAns = ensureSectionAnswerContainer(currentSec);
       if (chemAns.subPhase !== "selfcheck") {
@@ -1581,6 +1617,164 @@ function wireVocabRecall(answers) {
 }
 
 function renderMathRecall(section, answers) {
+  if (isMathFreeDrawMode(section)) {
+    if (answers.subPhase === "selfcheck") {
+      let userPanelHtml = "";
+      if (answers.photoDataUrl) {
+        userPanelHtml = `
+          <div class="chem-compare-panel">
+            <span class="field-label">La tua foto</span>
+            <button
+              type="button"
+              class="chem-compare-frame"
+              data-zoom-src="${answers.photoDataUrl}"
+              data-zoom-title="La tua foto"
+              aria-label="Ingrandisci la tua foto"
+            >
+              <img src="${answers.photoDataUrl}" alt="La tua foto della formula" class="chem-compare-img" />
+            </button>
+          </div>
+        `;
+      } else if (answers.drawingDataUrl) {
+        userPanelHtml = `
+          <div class="chem-compare-panel">
+            <span class="field-label">Il tuo disegno</span>
+            <button
+              type="button"
+              class="chem-compare-frame"
+              data-zoom-src="${answers.drawingDataUrl}"
+              data-zoom-title="Il tuo disegno"
+              aria-label="Ingrandisci il tuo disegno"
+            >
+              <img src="${answers.drawingDataUrl}" alt="Il tuo disegno" class="chem-compare-img" />
+            </button>
+          </div>
+        `;
+      } else {
+        userPanelHtml = `
+          <div class="chem-compare-panel">
+            <span class="field-label">Il tuo foglio</span>
+            <div class="chem-paper-placeholder">
+              Confronta il tuo foglio di carta con la formula a fianco.
+            </div>
+          </div>
+        `;
+      }
+
+      const isErone = /erone/i.test(String(section.formulaName || ""));
+      const mathRefHtml = isErone
+        ? `
+          <div class="math-ref-main">A = &radic;[p &middot; (p &minus; a) &middot; (p &minus; b) &middot; (p &minus; c)]</div>
+          <div class="math-ref-sub">p = (a + b + c) / 2</div>
+        `
+        : `
+          <div class="math-ref-main">d(P, r) = |a&middot;x<sub>0</sub> + b&middot;y<sub>0</sub> + c| / &radic;(a<sup>2</sup> + b<sup>2</sup>)</div>
+          <div class="math-ref-sub">a&middot;x + b&middot;y + c = 0</div>
+        `;
+
+      return `
+        <div class="card stack-md">
+          <div class="chem-header" style="margin-bottom: 0;">
+            <h2 class="chem-name">${escapeHtml(section.formulaName || "Formula matematica")}</h2>
+          </div>
+
+          <div class="chem-compare-grid">
+            ${userPanelHtml}
+
+            <div class="chem-compare-panel">
+              <span class="field-label">Formula corretta</span>
+              <div class="chem-compare-frame chem-compare-frame--math">
+                ${mathRefHtml}
+              </div>
+            </div>
+          </div>
+
+          ${answers.photoDataUrl || answers.drawingDataUrl ? `<p class="chem-zoom-hint">Tocca la tua immagine per ingrandirla</p>` : ""}
+
+          <div class="chem-eval-prompt">
+            <p class="question-prompt" style="margin-bottom: 10px;">La formula che hai scritto è corretta?</p>
+            <div class="chem-eval-actions">
+              <button type="button" id="chem-eval-correct" class="btn btn-eval-correct" data-self-eval="correct">
+                ✓ Corretta
+              </button>
+              <button type="button" id="chem-eval-wrong" class="btn btn-eval-wrong" data-self-eval="wrong">
+                ✗ Errata
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="chem-zoom-modal" class="chem-zoom-modal" role="dialog" aria-modal="true" aria-labelledby="chem-zoom-title" hidden>
+          <div class="chem-zoom-dialog">
+            <div class="chem-zoom-header">
+              <span id="chem-zoom-title" class="chem-zoom-title"></span>
+              <button type="button" id="chem-zoom-close" class="btn btn-secondary btn-sm">Chiudi</button>
+            </div>
+            <div class="chem-zoom-body">
+              <img id="chem-zoom-img" class="chem-zoom-img" alt="" />
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Step A: scrivi/disegna la formula senza alcun aiuto nel DOM
+    return `
+      <div class="card stack-sm">
+        <div class="chem-header" style="margin-bottom: 4px;">
+          <h2 class="chem-name">${escapeHtml(section.formulaName || "Formula matematica")}</h2>
+        </div>
+        <p class="helper-text">
+          Scrivi liberamente la formula sul riquadro qui sotto con il dito (oppure su un foglio di carta). Nessun aiuto verrà mostrato finché non premi «Ho finito → Confronta».
+        </p>
+
+        <div class="chem-canvas-wrap">
+          <canvas id="chem-canvas" class="chem-canvas" aria-label="Lavagnetta formula matematica"></canvas>
+        </div>
+
+        <div class="chem-canvas-tools">
+          <button type="button" id="chem-undo-btn" class="btn btn-secondary">Annulla tratto</button>
+          <button type="button" id="chem-clear-btn" class="btn btn-secondary">Pulisci</button>
+        </div>
+
+        <div class="chem-photo-box">
+          <input type="file" id="chem-photo-input" accept="image/*" hidden />
+          <button type="button" id="chem-photo-btn" class="btn btn-secondary btn-block">
+            📷 Scatta o carica foto del foglio
+          </button>
+          <div id="chem-photo-preview-wrap" class="chem-photo-preview-wrap" ${answers.photoDataUrl ? "" : "hidden"}>
+            <img
+              id="chem-photo-thumb"
+              class="chem-photo-thumb"
+              src="${answers.photoDataUrl || ""}"
+              alt="Anteprima foto formula"
+            />
+            <div class="chem-photo-preview-bar">
+              <span class="helper-text">Foto pronta per il confronto affiancato</span>
+              <button type="button" id="chem-photo-remove-btn" class="btn btn-secondary btn-sm">
+                Rimuovi foto
+              </button>
+            </div>
+          </div>
+          <div id="chem-photo-error" class="inline-error" hidden></div>
+        </div>
+
+        <label class="known-toggle ${answers.usedPaper ? "checked" : ""}" style="justify-content: center;">
+          <input
+            type="checkbox"
+            id="chem-paper-checkbox"
+            ${answers.usedPaper ? "checked" : ""}
+          />
+          <span>Sto scrivendo su un foglio di carta</span>
+        </label>
+
+        <button type="button" id="chem-finish-draw-btn" class="btn btn-recall-action btn-block" style="margin-top: 6px;">
+          Ho finito → Confronta
+        </button>
+      </div>
+    `;
+  }
+
   const recallQuestions = Array.isArray(section.recallQuestions) ? section.recallQuestions : [];
   const recallHtml = recallQuestions
     .map((q, qIdx) => {
@@ -1808,8 +2002,9 @@ function renderRecallView(section) {
   const isChemFreeDraw =
     section.type === "chemistry" &&
     (section.mode === "free_draw_selfcheck" || (!section.variantQuestion && !Array.isArray(section.detailQuestions)));
+  const isFreeDrawRecall = isChemFreeDraw || isMathFreeDrawMode(section);
 
-  const footerHtml = isChemFreeDraw
+  const footerHtml = isFreeDrawRecall
     ? ""
     : `
       <div class="phase-footer">
@@ -1820,7 +2015,9 @@ function renderRecallView(section) {
     `;
 
   const instructionBannerText = isChemistrySelfCheckActive(section, "recall")
-    ? "Confronta il tuo disegno (a sinistra) con la struttura corretta (a destra) e indica se è corretta o errata."
+    ? "Confronta ciò che hai scritto/disegnato (a sinistra) con la versione corretta (a destra) e indica se è corretta o errata."
+    : isMathFreeDrawMode(section)
+    ? "Scrivi liberamente la formula memorizzata (su schermo o su carta) senza aiuti. Al termine potrai confrontarla con quella corretta."
     : section.instructionRecall || "Inserisci ciò che ricordi prima dello scadere del tempo.";
 
   rootEl.innerHTML = `
@@ -1848,7 +2045,11 @@ function renderRecallView(section) {
       wireVocabRecall(answers);
       break;
     case "math":
-      wireMathRecall(answers);
+      if (isMathFreeDrawMode(section)) {
+        wireChemistryRecall(section, answers);
+      } else {
+        wireMathRecall(answers);
+      }
       break;
     case "dates":
       wireDatesRecall(answers);

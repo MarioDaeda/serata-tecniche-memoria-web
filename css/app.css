@@ -840,6 +840,30 @@ body {
   object-fit: contain;
 }
 
+.chem-compare-frame--math {
+  cursor: default;
+  flex-direction: column;
+  text-align: center;
+  padding: 10px 8px;
+  gap: 8px;
+  font-size: 0.84rem;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.chem-compare-frame--math .math-ref-main {
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.chem-compare-frame--math .math-ref-sub {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
 .chem-paper-placeholder {
   flex: 1;
   min-height: 140px;
