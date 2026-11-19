@@ -492,7 +492,6 @@ function buildSeedRecord({
   roundNum,
   cifre,
   chimicaRecall,
-  chimicaComp,
   parole,
   vocabScore,
   vocabKnown,
@@ -506,8 +505,8 @@ function buildSeedRecord({
   durationSeconds = 960
 }) {
   const testId = roundNum === 1 ? "A" : "B";
-  const mode = roundNum === 3 ? "recall" : "full";
-  const vocabNewTotal = 20 - vocabKnown;
+  const mode = roundNum >= 2 ? "recall" : "full";
+  const vocabNewTotal = 12 - vocabKnown;
 
   const sectionScores = {
     cifre: {
@@ -522,13 +521,13 @@ function buildSeedRecord({
       shiftedMatches
     },
     chimica: {
-      score: chimicaRecall + chimicaComp,
+      score: chimicaRecall,
       max: 10,
-      pct: roundOneDecimal(((chimicaRecall + chimicaComp) / 10) * 100),
+      pct: roundOneDecimal((chimicaRecall / 10) * 100),
       recall: chimicaRecall,
-      maxRecall: 8,
-      comp: chimicaComp,
-      maxComp: 2
+      maxRecall: 10,
+      comp: 0,
+      maxComp: 0
     },
     parole: {
       score: parole,
@@ -541,10 +540,10 @@ function buildSeedRecord({
     },
     vocaboli: {
       score: vocabScore,
-      max: 20,
-      pct: roundOneDecimal((vocabScore / 20) * 100),
+      max: 12,
+      pct: roundOneDecimal((vocabScore / 12) * 100),
       recall: vocabScore,
-      maxRecall: 20,
+      maxRecall: 12,
       comp: 0,
       maxComp: 0,
       knownCount: vocabKnown,
@@ -572,7 +571,7 @@ function buildSeedRecord({
   };
 
   const scoreRecall = cifre + chimicaRecall + parole + vocabScore + matRecall + dateRecall;
-  const scoreComp = chimicaComp + matComp + dateComp;
+  const scoreComp = matComp + dateComp;
   const scoreTotal = scoreRecall + scoreComp;
 
   return {
@@ -586,14 +585,14 @@ function buildSeedRecord({
     nickname,
     category,
     score_total: scoreTotal,
-    max_total: 100,
-    pct_total: roundOneDecimal(scoreTotal),
+    max_total: 92,
+    pct_total: roundOneDecimal((scoreTotal / 92) * 100),
     score_recall: scoreRecall,
-    max_recall: 88,
-    pct_recall: roundOneDecimal((scoreRecall / 88) * 100),
+    max_recall: 82,
+    pct_recall: roundOneDecimal((scoreRecall / 82) * 100),
     score_comprehension: scoreComp,
-    max_comprehension: 12,
-    pct_comprehension: roundOneDecimal((scoreComp / 12) * 100),
+    max_comprehension: 10,
+    pct_comprehension: roundOneDecimal((scoreComp / 10) * 100),
     vocab_known_count: vocabKnown,
     vocab_new_correct: vocabNewCorrect,
     vocab_new_total: vocabNewTotal,
@@ -605,7 +604,7 @@ function buildSeedRecord({
 
 /**
  * Popola 18 consegne realistiche demo in `localStorage` (`stm_demo_submissions_v1`)
- * distribuite sui Round 1, 2 e 3 e sulle 3 categorie canoniche.
+ * distribuite sui Round 1, 2 e 3 e sulle 3 categorie canoniche (rubrica 92 pt).
  * @param {string} [sessionCode="SERATA-1"]
  * @returns {Array<object>}
  */
@@ -617,100 +616,100 @@ export function seedDemoSubmissions(sessionCode = APP_CONFIG.defaultSession || "
   const ts = (idx) => new Date(baseMs + idx * 45_000).toISOString();
 
   const specs = [
-    // --- WEEKEND (~68% -> ~85.5% -> ~97%) ---
+    // --- WEEKEND ---
     {
       participantId: "p_demo_wk_1", nickname: "Giulia R.", category: "weekend", roundNum: 1,
-      cifre: 20, chimicaRecall: 6, chimicaComp: 1, parole: 10, vocabScore: 14, vocabKnown: 3, vocabNewCorrect: 11,
-      matRecall: 3, matComp: 3, dateRecall: 6, dateComp: 3, durationSeconds: 1180
+      cifre: 20, chimicaRecall: 10, parole: 10, vocabScore: 8, vocabKnown: 2, vocabNewCorrect: 6,
+      matRecall: 5, matComp: 5, dateRecall: 6, dateComp: 3, durationSeconds: 980
     },
     {
       participantId: "p_demo_wk_2", nickname: "Matteo B.", category: "weekend", roundNum: 1,
-      cifre: 21, chimicaRecall: 6, chimicaComp: 2, parole: 11, vocabScore: 15, vocabKnown: 4, vocabNewCorrect: 11,
-      matRecall: 3, matComp: 3, dateRecall: 6, dateComp: 3, durationSeconds: 1120
+      cifre: 21, chimicaRecall: 10, parole: 11, vocabScore: 9, vocabKnown: 2, vocabNewCorrect: 7,
+      matRecall: 0, matComp: 0, dateRecall: 8, dateComp: 4, durationSeconds: 920
     },
     {
       participantId: "p_demo_wk_1", nickname: "Giulia R.", category: "weekend", roundNum: 2,
-      cifre: 26, chimicaRecall: 7, chimicaComp: 2, parole: 13, vocabScore: 17, vocabKnown: 2, vocabNewCorrect: 15,
-      matRecall: 4, matComp: 4, dateRecall: 8, dateComp: 3, durationSeconds: 1090
+      cifre: 26, chimicaRecall: 10, parole: 13, vocabScore: 10, vocabKnown: 2, vocabNewCorrect: 8,
+      matRecall: 5, matComp: 5, dateRecall: 8, dateComp: 4, durationSeconds: 610
     },
     {
       participantId: "p_demo_wk_2", nickname: "Matteo B.", category: "weekend", roundNum: 2,
-      cifre: 27, chimicaRecall: 7, chimicaComp: 2, parole: 13.5, vocabScore: 17.5, vocabKnown: 3, vocabNewCorrect: 14.5,
-      matRecall: 4, matComp: 4, dateRecall: 8, dateComp: 4, durationSeconds: 1050
+      cifre: 27, chimicaRecall: 10, parole: 13.5, vocabScore: 10.5, vocabKnown: 2, vocabNewCorrect: 8.5,
+      matRecall: 5, matComp: 5, dateRecall: 8, dateComp: 4, durationSeconds: 590
     },
     {
       participantId: "p_demo_wk_1", nickname: "Giulia R.", category: "weekend", roundNum: 3,
-      cifre: 29, chimicaRecall: 8, chimicaComp: 2, parole: 15, vocabScore: 19, vocabKnown: 2, vocabNewCorrect: 17,
-      matRecall: 5, matComp: 5, dateRecall: 9, dateComp: 4, durationSeconds: 510
+      cifre: 29, chimicaRecall: 10, parole: 15, vocabScore: 11, vocabKnown: 2, vocabNewCorrect: 9,
+      matRecall: 5, matComp: 5, dateRecall: 10, dateComp: 5, durationSeconds: 510
     },
     {
       participantId: "p_demo_wk_2", nickname: "Matteo B.", category: "weekend", roundNum: 3,
-      cifre: 30, chimicaRecall: 8, chimicaComp: 2, parole: 15, vocabScore: 19, vocabKnown: 3, vocabNewCorrect: 16,
+      cifre: 30, chimicaRecall: 10, parole: 15, vocabScore: 11.5, vocabKnown: 2, vocabNewCorrect: 9.5,
       matRecall: 5, matComp: 5, dateRecall: 10, dateComp: 4, durationSeconds: 495
     },
 
-    // --- MESI FA (~45% -> ~75% -> ~95%) ---
+    // --- MESI FA ---
     {
       participantId: "p_demo_mf_1", nickname: "Elena V.", category: "mesi_fa", roundNum: 1,
-      cifre: 12, chimicaRecall: 4, chimicaComp: 1, parole: 7, vocabScore: 10, vocabKnown: 2, vocabNewCorrect: 8,
-      matRecall: 2, matComp: 2, dateRecall: 4, dateComp: 2, durationSeconds: 1290
+      cifre: 12, chimicaRecall: 0, parole: 7, vocabScore: 6, vocabKnown: 1, vocabNewCorrect: 5,
+      matRecall: 5, matComp: 5, dateRecall: 4, dateComp: 2, durationSeconds: 1040
     },
     {
       participantId: "p_demo_mf_2", nickname: "Davide P.", category: "mesi_fa", roundNum: 1,
-      cifre: 13, chimicaRecall: 4, chimicaComp: 1, parole: 7.5, vocabScore: 10.5, vocabKnown: 3, vocabNewCorrect: 7.5,
-      matRecall: 2, matComp: 2, dateRecall: 4, dateComp: 2, durationSeconds: 1245
+      cifre: 13, chimicaRecall: 0, parole: 7.5, vocabScore: 6.5, vocabKnown: 2, vocabNewCorrect: 4.5,
+      matRecall: 5, matComp: 5, dateRecall: 4, dateComp: 3, durationSeconds: 1015
     },
     {
       participantId: "p_demo_mf_1", nickname: "Elena V.", category: "mesi_fa", roundNum: 2,
-      cifre: 23, chimicaRecall: 6, chimicaComp: 1, parole: 11.5, vocabScore: 15.5, vocabKnown: 2, vocabNewCorrect: 13.5,
-      matRecall: 4, matComp: 3, dateRecall: 7, dateComp: 3, durationSeconds: 1160
+      cifre: 23, chimicaRecall: 10, parole: 11.5, vocabScore: 9.5, vocabKnown: 1, vocabNewCorrect: 8.5,
+      matRecall: 5, matComp: 5, dateRecall: 6, dateComp: 3, durationSeconds: 660
     },
     {
       participantId: "p_demo_mf_2", nickname: "Davide P.", category: "mesi_fa", roundNum: 2,
-      cifre: 24, chimicaRecall: 6, chimicaComp: 2, parole: 12, vocabScore: 16, vocabKnown: 3, vocabNewCorrect: 13,
-      matRecall: 4, matComp: 3, dateRecall: 7, dateComp: 2, durationSeconds: 1140
+      cifre: 24, chimicaRecall: 10, parole: 12, vocabScore: 9.5, vocabKnown: 2, vocabNewCorrect: 7.5,
+      matRecall: 5, matComp: 5, dateRecall: 6, dateComp: 3, durationSeconds: 640
     },
     {
       participantId: "p_demo_mf_1", nickname: "Elena V.", category: "mesi_fa", roundNum: 3,
-      cifre: 29, chimicaRecall: 7, chimicaComp: 2, parole: 14.5, vocabScore: 18.5, vocabKnown: 2, vocabNewCorrect: 16.5,
-      matRecall: 5, matComp: 5, dateRecall: 9, dateComp: 4, durationSeconds: 540
+      cifre: 29, chimicaRecall: 10, parole: 14.5, vocabScore: 11, vocabKnown: 1, vocabNewCorrect: 10,
+      matRecall: 5, matComp: 5, dateRecall: 8, dateComp: 4, durationSeconds: 540
     },
     {
       participantId: "p_demo_mf_2", nickname: "Davide P.", category: "mesi_fa", roundNum: 3,
-      cifre: 29, chimicaRecall: 8, chimicaComp: 2, parole: 15, vocabScore: 19, vocabKnown: 3, vocabNewCorrect: 16,
-      matRecall: 5, matComp: 4, dateRecall: 10, dateComp: 4, durationSeconds: 525
+      cifre: 29, chimicaRecall: 10, parole: 15, vocabScore: 11.5, vocabKnown: 2, vocabNewCorrect: 9.5,
+      matRecall: 5, matComp: 5, dateRecall: 10, dateComp: 4, durationSeconds: 525
     },
 
-    // --- NESSUN CORSO (~28% -> ~62% -> ~92%) ---
+    // --- NESSUN CORSO ---
     {
       participantId: "p_demo_nc_1", nickname: "Sofia N.", category: "nessun_corso", roundNum: 1,
-      cifre: 6, chimicaRecall: 2, chimicaComp: 1, parole: 4.5, vocabScore: 6.5, vocabKnown: 1, vocabNewCorrect: 5.5,
-      matRecall: 1, matComp: 2, dateRecall: 2, dateComp: 2, shiftDetected: true, shiftedMatches: 11, durationSeconds: 1380
+      cifre: 6, chimicaRecall: 0, parole: 4.5, vocabScore: 4, vocabKnown: 1, vocabNewCorrect: 3,
+      matRecall: 0, matComp: 0, dateRecall: 2, dateComp: 2, shiftDetected: true, shiftedMatches: 11, durationSeconds: 1080
     },
     {
       participantId: "p_demo_nc_2", nickname: "Luca M.", category: "nessun_corso", roundNum: 1,
-      cifre: 7, chimicaRecall: 3, chimicaComp: 0, parole: 5, vocabScore: 7, vocabKnown: 2, vocabNewCorrect: 5,
-      matRecall: 1, matComp: 2, dateRecall: 2, dateComp: 2, durationSeconds: 1350
+      cifre: 7, chimicaRecall: 0, parole: 5, vocabScore: 4.5, vocabKnown: 1, vocabNewCorrect: 3.5,
+      matRecall: 0, matComp: 0, dateRecall: 4, dateComp: 2, durationSeconds: 1050
     },
     {
       participantId: "p_demo_nc_1", nickname: "Sofia N.", category: "nessun_corso", roundNum: 2,
-      cifre: 19, chimicaRecall: 5, chimicaComp: 1, parole: 10, vocabScore: 12, vocabKnown: 1, vocabNewCorrect: 11,
-      matRecall: 3, matComp: 3, dateRecall: 6, dateComp: 2, durationSeconds: 1210
+      cifre: 19, chimicaRecall: 10, parole: 10, vocabScore: 8, vocabKnown: 1, vocabNewCorrect: 7,
+      matRecall: 5, matComp: 5, dateRecall: 6, dateComp: 2, durationSeconds: 690
     },
     {
       participantId: "p_demo_nc_2", nickname: "Luca M.", category: "nessun_corso", roundNum: 2,
-      cifre: 20, chimicaRecall: 5, chimicaComp: 1, parole: 10, vocabScore: 13, vocabKnown: 2, vocabNewCorrect: 11,
-      matRecall: 3, matComp: 3, dateRecall: 6, dateComp: 2, durationSeconds: 1195
+      cifre: 20, chimicaRecall: 10, parole: 10, vocabScore: 8.5, vocabKnown: 1, vocabNewCorrect: 7.5,
+      matRecall: 5, matComp: 5, dateRecall: 6, dateComp: 3, durationSeconds: 675
     },
     {
       participantId: "p_demo_nc_1", nickname: "Sofia N.", category: "nessun_corso", roundNum: 3,
-      cifre: 28, chimicaRecall: 7, chimicaComp: 2, parole: 14, vocabScore: 18, vocabKnown: 1, vocabNewCorrect: 17,
-      matRecall: 5, matComp: 4, dateRecall: 9, dateComp: 4, durationSeconds: 560
+      cifre: 28, chimicaRecall: 10, parole: 14, vocabScore: 10.5, vocabKnown: 1, vocabNewCorrect: 9.5,
+      matRecall: 5, matComp: 5, dateRecall: 8, dateComp: 4, durationSeconds: 560
     },
     {
       participantId: "p_demo_nc_2", nickname: "Luca M.", category: "nessun_corso", roundNum: 3,
-      cifre: 28, chimicaRecall: 7, chimicaComp: 2, parole: 14.5, vocabScore: 18.5, vocabKnown: 2, vocabNewCorrect: 16.5,
-      matRecall: 5, matComp: 4, dateRecall: 10, dateComp: 4, durationSeconds: 550
+      cifre: 28, chimicaRecall: 10, parole: 14.5, vocabScore: 11, vocabKnown: 1, vocabNewCorrect: 10,
+      matRecall: 5, matComp: 5, dateRecall: 10, dateComp: 4, durationSeconds: 550
     }
   ];
 

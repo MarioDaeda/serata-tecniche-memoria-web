@@ -22,7 +22,7 @@ const SECTIONS = [
   { key: "cifre", label: "Cifre", defaultMax: 30 },
   { key: "chimica", label: "Chimica", defaultMax: 10 },
   { key: "parole", label: "Parole PAV", defaultMax: 15 },
-  { key: "vocaboli", label: "Vocaboli", defaultMax: 20 },
+  { key: "vocaboli", label: "Vocaboli", defaultMax: 12 },
   { key: "matematica", label: "Matematica", defaultMax: 10 },
   { key: "date", label: "Date storiche", defaultMax: 15 }
 ];
@@ -169,6 +169,9 @@ function computeGroupStats(items) {
       avgScoreTotal: null,
       avgScoreRecall: null,
       avgScoreComp: null,
+      avgMaxTotal: 92,
+      avgMaxRecall: 82,
+      avgMaxComp: 10,
       shiftCount: 0
     };
   }
@@ -178,6 +181,9 @@ function computeGroupStats(items) {
   let sumScoreTotal = 0;
   let sumScoreRecall = 0;
   let sumScoreComp = 0;
+  let sumMaxTotal = 0;
+  let sumMaxRecall = 0;
+  let sumMaxComp = 0;
   let shiftCount = 0;
 
   for (const item of items) {
@@ -187,6 +193,9 @@ function computeGroupStats(items) {
     sumScoreTotal += Number(item.score_total || 0);
     sumScoreRecall += Number(item.score_recall || 0);
     sumScoreComp += Number(item.score_comprehension || 0);
+    sumMaxTotal += Number(item.max_total || 92);
+    sumMaxRecall += Number(item.max_recall || 82);
+    sumMaxComp += Number(item.max_comprehension || 10);
     if (item.digits_shift_detected) shiftCount++;
   }
 
@@ -199,6 +208,9 @@ function computeGroupStats(items) {
     avgScoreTotal: sumScoreTotal / count,
     avgScoreRecall: sumScoreRecall / count,
     avgScoreComp: sumScoreComp / count,
+    avgMaxTotal: sumMaxTotal / count,
+    avgMaxRecall: sumMaxRecall / count,
+    avgMaxComp: sumMaxComp / count,
     shiftCount
   };
 }
@@ -284,17 +296,17 @@ function renderLiveTab(filtered) {
     {
       label: "Media Totale Sala",
       value: formatPct(overall.avgPctTotal),
-      sub: overall.count ? `${formatNum(overall.avgScoreTotal)} / 100 pt medi` : "In attesa di consegne"
+      sub: overall.count ? `${formatNum(overall.avgScoreTotal)} / ${formatNum(overall.avgMaxTotal, 0)} pt medi` : "In attesa di consegne"
     },
     {
       label: "Media Ricordo",
       value: formatPct(overall.avgPctRecall),
-      sub: overall.count ? `${formatNum(overall.avgScoreRecall)} / 88 pt medi` : "—"
+      sub: overall.count ? `${formatNum(overall.avgScoreRecall)} / ${formatNum(overall.avgMaxRecall, 0)} pt medi` : "—"
     },
     {
       label: "Media Comprensione",
       value: formatPct(overall.avgPctComp),
-      sub: overall.count ? `${formatNum(overall.avgScoreComp)} / 12 pt medi` : "—"
+      sub: overall.count ? `${formatNum(overall.avgScoreComp)} / ${formatNum(overall.avgMaxComp, 0)} pt medi` : "—"
     }
   ];
 
@@ -340,7 +352,7 @@ function renderLiveTab(filtered) {
       createEl(
         "div",
         "category-pts-sub",
-        stats.count ? `${formatNum(stats.avgScoreTotal)} / 100 pt` : "Nessun dato"
+        stats.count ? `${formatNum(stats.avgScoreTotal)} / ${formatNum(stats.avgMaxTotal, 0)} pt` : "Nessun dato"
       )
     );
     card.appendChild(pctRow);
@@ -357,14 +369,14 @@ function renderLiveTab(filtered) {
     boxRecall.appendChild(createEl("div", "subscore-label", "Ricordo"));
     boxRecall.appendChild(createEl("div", "subscore-val", formatPct(stats.avgPctRecall)));
     boxRecall.appendChild(
-      createEl("div", "subscore-detail", stats.count ? `${formatNum(stats.avgScoreRecall)} / 88 pt` : "—")
+      createEl("div", "subscore-detail", stats.count ? `${formatNum(stats.avgScoreRecall)} / ${formatNum(stats.avgMaxRecall, 0)} pt` : "—")
     );
 
     const boxComp = createEl("div", "subscore-box");
     boxComp.appendChild(createEl("div", "subscore-label", "Comprensione"));
     boxComp.appendChild(createEl("div", "subscore-val", formatPct(stats.avgPctComp)));
     boxComp.appendChild(
-      createEl("div", "subscore-detail", stats.count ? `${formatNum(stats.avgScoreComp)} / 12 pt` : "—")
+      createEl("div", "subscore-detail", stats.count ? `${formatNum(stats.avgScoreComp)} / ${formatNum(stats.avgMaxComp, 0)} pt` : "—")
     );
 
     subGrid.appendChild(boxRecall);
@@ -673,7 +685,7 @@ function computeSectionAggregate(items, secKey, defaultMax) {
     if (secKey === "vocaboli") {
       sumVocabKnown += Number(sec.knownCount ?? sub.vocab_known_count ?? 0);
       sumVocabNewCorrect += Number(sec.newCorrect ?? sub.vocab_new_correct ?? 0);
-      sumVocabNewTotal += Number(sec.newTotal ?? sub.vocab_new_total ?? 20);
+      sumVocabNewTotal += Number(sec.newTotal ?? sub.vocab_new_total ?? 12);
     }
   }
 
@@ -805,12 +817,12 @@ function renderSectionsTab() {
       trNew.appendChild(createEl("td", "", "↳ Vocaboli nuovi appresi"));
       for (const cat of CATEGORIES) {
         const catItems = baseItems.filter((s) => s.category === cat.key);
-        const agg = computeSectionAggregate(catItems, "vocaboli", 20);
+        const agg = computeSectionAggregate(catItems, "vocaboli", 12);
         trNew.appendChild(
           createEl("td", "num", agg.count > 0 ? formatPct(agg.vocabNewPct) : "—")
         );
       }
-      const allVocab = computeSectionAggregate(baseItems, "vocaboli", 20);
+      const allVocab = computeSectionAggregate(baseItems, "vocaboli", 12);
       trNew.appendChild(
         createEl("td", "num", allVocab.count > 0 ? formatPct(allVocab.vocabNewPct) : "—")
       );
@@ -841,7 +853,8 @@ function buildParticipantUrl() {
   const session = rawSession || "SERATA-1";
   const test = el["qr-test"].value === "B" ? "B" : "A";
   const round = ["1", "2", "3"].includes(el["qr-round"].value) ? el["qr-round"].value : "1";
-  const mode = el["qr-mode"].value === "recall" ? "recall" : "full";
+  const rawMode = el["qr-mode"].value;
+  const mode = rawMode === "recall" ? "recall" : rawMode === "study" ? "study" : "full";
 
   const base = getAppBaseUrl();
   const params = new URLSearchParams({
@@ -871,8 +884,13 @@ function injectQrSvg(container, svgMarkup) {
 
 function renderQrTab() {
   const { session, test, round, mode, url } = buildParticipantUrl();
-  const modeLabel = mode === "recall" ? "Solo Risposta" : "Studio + Risposta";
-  const titleText = `${session} · Round ${round} — Test ${test} (${modeLabel})`;
+  const modeLabel =
+    mode === "recall"
+      ? "Solo Recupero"
+      : mode === "study"
+      ? "Solo Memorizzazione"
+      : "Studio + Risposta";
+  const titleText = `${session} · Prova ${round} — Test ${test} (${modeLabel})`;
 
   el["qr-url-display"].textContent = url;
   el["qr-stage-badge"].textContent = titleText;
@@ -1282,7 +1300,17 @@ function bindEvents() {
     btn.addEventListener("click", () => switchTab(btn.dataset.tab));
   }
 
-  for (const inputId of ["qr-session", "qr-test", "qr-round", "qr-mode"]) {
+  el["qr-round"].addEventListener("change", () => {
+    const r = el["qr-round"].value;
+    if (r === "1") {
+      el["qr-mode"].value = "study";
+    } else if (r === "2" || r === "3") {
+      el["qr-mode"].value = "recall";
+    }
+    renderQrTab();
+  });
+
+  for (const inputId of ["qr-session", "qr-test", "qr-mode"]) {
     el[inputId].addEventListener("input", renderQrTab);
     el[inputId].addEventListener("change", renderQrTab);
   }

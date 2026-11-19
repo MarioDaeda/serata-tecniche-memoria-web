@@ -1,8 +1,8 @@
 {
   "testId": "B",
   "title": "Test B — Batteria Parallela",
-  "subtitle": "Prova parallela · 6 sezioni cronometrate · 100 punti",
-  "rubricTotal": 100,
+  "subtitle": "6 sezioni · 92 punti totali · 0 suggerimenti",
+  "rubricTotal": 92,
   "sections": [
     {
       "id": "cifre",
@@ -10,9 +10,9 @@
       "enabled": true,
       "title": "Sequenza di 30 cifre",
       "instructionStudy": "Memorizza le 30 cifre nell'ordine esatto da sinistra a destra (3 minuti).",
-      "instructionRecall": "Inserisci le 30 cifre nell'ordine esatto. Se non ricordi una cifra, usa «Salta casella» per non spostare le successive.",
+      "instructionRecall": "Inserisci le 30 cifre nell'ordine esatto. Se non ricordi una cifra, usa «Salta casella» per non spostare le successive (3 minuti).",
       "studySeconds": 180,
-      "recallSeconds": 120,
+      "recallSeconds": 180,
       "maxRecallPoints": 30,
       "maxComprehensionPoints": 0,
       "digits": "394176018257139425608531740597"
@@ -22,136 +22,27 @@
       "type": "chemistry",
       "enabled": true,
       "title": "Struttura chimica",
-      "instructionStudy": "Osserva con attenzione la struttura della molecola: nuclei ciclici fusi, eteroatomi, posizione del sostituente e catena laterale (3 minuti).",
-      "instructionRecall": "Seleziona la struttura esatta tra le 4 varianti e rispondi alle 6 domande sui dettagli strutturali.",
+      "mode": "free_draw_selfcheck",
+      "instructionStudy": "Osserva e memorizza la struttura chimica completa: nuclei ciclici fusi, atomi di azoto e ossigeno, sostituenti e catena laterale (3 minuti).",
+      "instructionRecall": "Disegna liberamente la struttura chimica memorizzata (su schermo o su carta) senza aiuti. Al termine potrai confrontarla con l'originale.",
       "studySeconds": 180,
-      "recallSeconds": 120,
-      "maxRecallPoints": 8,
-      "maxComprehensionPoints": 2,
+      "recallSeconds": 150,
+      "maxRecallPoints": 10,
+      "maxComprehensionPoints": 0,
       "moleculeName": "Melatonina",
       "formula": "C₁₃H₁₆N₂O₂",
       "studySvgPath": "assets/svg/test_B/melatonina_corretto.svg",
-      "variantQuestion": {
-        "prompt": "Quale delle quattro strutture corrisponde esattamente alla Melatonina appena studiata?",
-        "points": 4,
-        "dimension": "recall",
-        "options": [
-          {
-            "id": "v1",
-            "label": "Struttura A",
-            "svgPath": "assets/svg/test_B/melatonina_dist_indolo.svg",
-            "isCorrect": false
-          },
-          {
-            "id": "v2",
-            "label": "Struttura B",
-            "svgPath": "assets/svg/test_B/melatonina_dist_metossi.svg",
-            "isCorrect": false
-          },
-          {
-            "id": "v3",
-            "label": "Struttura C",
-            "svgPath": "assets/svg/test_B/melatonina_corretto.svg",
-            "isCorrect": true
-          },
-          {
-            "id": "v4",
-            "label": "Struttura D",
-            "svgPath": "assets/svg/test_B/melatonina_dist_catena.svg",
-            "isCorrect": false
-          }
-        ]
-      },
-      "detailQuestions": [
-        {
-          "id": "chem_b_1",
-          "dimension": "recall",
-          "points": 1,
-          "prompt": "Quale scheletro biciclico forma la parte sinistra della melatonina?",
-          "choices": [
-            { "id": "a", "text": "Un anello cicloesenico singolo con tre metili" },
-            { "id": "b", "text": "Un nucleo indolico (anello benzenico a 6 termini fuso con anello pirrolico a 5 termini)" },
-            { "id": "c", "text": "Un nucleo benzofuranico contenente un atomo di ossigeno nell'anello a 5 termini" },
-            { "id": "d", "text": "Due anelli benzenici fusi privi di eteroatomi" }
-          ],
-          "correctId": "b"
-        },
-        {
-          "id": "chem_b_2",
-          "dimension": "recall",
-          "points": 1,
-          "prompt": "Che cosa caratterizza l'anello a 5 termini fuso al benzene?",
-          "choices": [
-            { "id": "a", "text": "Un atomo di ossigeno (-O-) senza doppi legami interni" },
-            { "id": "b", "text": "Due atomi di azoto contigui legati da un triplo legame" },
-            { "id": "c", "text": "Un atomo di azoto NH in posizione 1 e un doppio legame C2=C3" },
-            { "id": "d", "text": "Un gruppo carbonilico C=O integrato nel ciclo" }
-          ],
-          "correctId": "c"
-        },
-        {
-          "id": "chem_b_3",
-          "dimension": "recall",
-          "points": 1,
-          "prompt": "Quale gruppo sostituente è legato in posizione 5 sull'anello benzenico?",
-          "choices": [
-            { "id": "a", "text": "Un gruppo ossidrilico (-OH)" },
-            { "id": "b", "text": "Un gruppo metossi (-OCH₃)" },
-            { "id": "c", "text": "Un gruppo carbossilico (-COOH)" },
-            { "id": "d", "text": "Un gruppo metilico (-CH₃)" }
-          ],
-          "correctId": "b"
-        },
-        {
-          "id": "chem_b_4",
-          "dimension": "recall",
-          "points": 1,
-          "prompt": "Quale gruppo chiude la catena laterale della melatonina?",
-          "choices": [
-            { "id": "a", "text": "Un gruppo acetammidico (-NH-C(=O)-CH₃) dopo la catena etilica -CH₂-CH₂-" },
-            { "id": "b", "text": "Un'ammina alifatica priva di carbonile (-CH₂-CH₂-NH-CH₂-CH₃)" },
-            { "id": "c", "text": "Una catena polienica di 9 carboni con 4 doppi legami" },
-            { "id": "d", "text": "Un gruppo alcolico terminale (-CH₂-CH₂-OH)" }
-          ],
-          "correctId": "a"
-        },
-        {
-          "id": "chem_b_5",
-          "dimension": "comprehension",
-          "points": 1,
-          "prompt": "Come sono collegati i due sostituenti principali al nucleo indolico della melatonina?",
-          "choices": [
-            { "id": "a", "text": "Entrambi i sostituenti partono dallo stesso anello pirrolico a 5 termini" },
-            { "id": "b", "text": "Entrambi i sostituenti si trovano sullo stesso anello benzenico in posizioni adiacenti" },
-            { "id": "c", "text": "Il gruppo metossi (-OCH₃) è sull'anello benzenico (pos. 5), mentre la catena etilacetammidica parte dall'anello pirrolico (pos. 3)" },
-            { "id": "d", "text": "La catena laterale è collegata all'ossigeno del gruppo metossi anziché all'anello" }
-          ],
-          "correctId": "c"
-        },
-        {
-          "id": "chem_b_6",
-          "dimension": "comprehension",
-          "points": 1,
-          "prompt": "Nella sequenza -CH₂-CH₂-NH-C(=O)-CH₃, che cosa rende questo gruppo terminale un'ammide anziché un'ammina o un estere?",
-          "choices": [
-            { "id": "a", "text": "L'atomo di azoto (NH) è legato direttamente al carbonio carbonilico (C=O), anziché esserne privo o avere un ossigeno al posto di NH" },
-            { "id": "b", "text": "La presenza di due doppi legami C=C coniugati tra i due gruppi CH₂" },
-            { "id": "c", "text": "Un legame diretto tra due atomi di ossigeno (-O-O-) all'estremità" },
-            { "id": "d", "text": "La presenza di tre metili sullo stesso carbonio terminale" }
-          ],
-          "correctId": "a"
-        }
-      ]
+      "selfCheckCriteria": "Verifica: anello benzenico fuso a pirrolo (indolo) con NH in pos. 1 e doppio legame C2=C3, gruppo metossi (-OCH₃) in pos. 5 sul benzene e catena -CH₂-CH₂-NH-C(=O)-CH₃ in pos. 3 del pirrolo."
     },
     {
       "id": "parole",
       "type": "words",
       "enabled": true,
       "title": "Elenco di 15 parole",
-      "instructionStudy": "Memorizza queste 15 parole nell'ordine esatto dall'alto verso il basso (2 minuti).",
-      "instructionRecall": "Scrivi le 15 parole nella posizione esatta in cui le hai studiate dall'alto verso il basso.",
-      "studySeconds": 120,
-      "recallSeconds": 120,
+      "instructionStudy": "Memorizza queste 15 parole nell'ordine esatto dall'alto verso il basso (2 minuti e 30 secondi).",
+      "instructionRecall": "Scrivi le 15 parole nella posizione esatta in cui le hai memorizzate dall'alto verso il basso (3 minuti).",
+      "studySeconds": 150,
+      "recallSeconds": 180,
       "maxRecallPoints": 15,
       "maxComprehensionPoints": 0,
       "showNumbersInStudy": false,
@@ -194,40 +85,33 @@
       "id": "vocaboli",
       "type": "vocab",
       "enabled": true,
-      "title": "20 vocaboli in 4 lingue",
-      "instructionStudy": "Memorizza i 20 vocaboli stranieri con il rispettivo significato italiano (4 minuti). Se conoscevi già una parola, potrai segnalarlo in risposta.",
-      "instructionRecall": "Traduci dall'italiano nella lingua indicata (l'ordine è mescolato). Spunta «Già nota» solo per i vocaboli che conoscevi già prima di stasera.",
-      "studySeconds": 240,
-      "recallSeconds": 180,
-      "maxRecallPoints": 20,
+      "title": "12 vocaboli in 4 lingue",
+      "instructionStudy": "Memorizza i 12 vocaboli stranieri con la rispettiva traduzione italiana (6 minuti — 30 secondi per vocabolo).",
+      "instructionRecall": "Scrivi la traduzione nella lingua indicata (raggruppati per lingua, ordine interno mescolato). Spunta «Già nota» solo se conoscevi già il termine prima di questa serata (4 minuti).",
+      "studySeconds": 360,
+      "recallSeconds": 240,
+      "maxRecallPoints": 12,
       "maxComprehensionPoints": 0,
+      "groupByLanguageInRecall": true,
       "items": [
         { "id": "v01", "language": "Spagnolo", "foreign": "ardilla", "italian": "scoiattolo", "accepted": ["ardilla"] },
-        { "id": "v02", "language": "Spagnolo", "foreign": "cepillo", "italian": "spazzola", "accepted": ["cepillo"] },
-        { "id": "v03", "language": "Spagnolo", "foreign": "columpio", "italian": "altalena", "accepted": ["columpio"] },
-        { "id": "v04", "language": "Spagnolo", "foreign": "murciélago", "italian": "pipistrello", "accepted": ["murciélago", "murcielago"] },
-        { "id": "v05", "language": "Spagnolo", "foreign": "ladrillo", "italian": "mattone", "accepted": ["ladrillo"] },
-        { "id": "v06", "language": "Francese", "foreign": "balai", "italian": "scopa", "accepted": ["balai"] },
-        { "id": "v07", "language": "Francese", "foreign": "tiroir", "italian": "cassetto", "accepted": ["tiroir"] },
-        { "id": "v08", "language": "Francese", "foreign": "bouchon", "italian": "tappo", "accepted": ["bouchon"] },
-        { "id": "v09", "language": "Francese", "foreign": "cloche", "italian": "campana", "accepted": ["cloche"] },
-        { "id": "v10", "language": "Francese", "foreign": "poubelle", "italian": "cestino dei rifiuti", "accepted": ["poubelle"] },
-        { "id": "v11", "language": "Inglese", "foreign": "walrus", "italian": "tricheco", "accepted": ["walrus"] },
-        { "id": "v12", "language": "Inglese", "foreign": "ladle", "italian": "mestolo", "accepted": ["ladle"] },
-        { "id": "v13", "language": "Inglese", "foreign": "sieve", "italian": "colino / setaccio", "accepted": ["sieve"] },
-        { "id": "v14", "language": "Inglese", "foreign": "sparrow", "italian": "passero", "accepted": ["sparrow"] },
-        { "id": "v15", "language": "Inglese", "foreign": "hinge", "italian": "cardine / cerniera", "accepted": ["hinge"] },
-        { "id": "v16", "language": "Tedesco", "foreign": "Seife", "italian": "sapone", "accepted": ["Seife"] },
-        { "id": "v17", "language": "Tedesco", "foreign": "Zwiebel", "italian": "cipolla", "accepted": ["Zwiebel"] },
-        { "id": "v18", "language": "Tedesco", "foreign": "Schere", "italian": "forbici", "accepted": ["Schere"] },
-        { "id": "v19", "language": "Tedesco", "foreign": "Taube", "italian": "piccione", "accepted": ["Taube"] },
-        { "id": "v20", "language": "Tedesco", "foreign": "Leiter", "italian": "scala a pioli", "accepted": ["Leiter"] }
+        { "id": "v02", "language": "Spagnolo", "foreign": "columpio", "italian": "altalena", "accepted": ["columpio"] },
+        { "id": "v03", "language": "Spagnolo", "foreign": "ladrillo", "italian": "mattone", "accepted": ["ladrillo"] },
+        { "id": "v04", "language": "Francese", "foreign": "balai", "italian": "scopa", "accepted": ["balai"] },
+        { "id": "v05", "language": "Francese", "foreign": "tiroir", "italian": "cassetto", "accepted": ["tiroir"] },
+        { "id": "v06", "language": "Francese", "foreign": "poubelle", "italian": "cestino dei rifiuti", "accepted": ["poubelle"] },
+        { "id": "v07", "language": "Inglese", "foreign": "walrus", "italian": "tricheco", "accepted": ["walrus"] },
+        { "id": "v08", "language": "Inglese", "foreign": "ladle", "italian": "mestolo", "accepted": ["ladle"] },
+        { "id": "v09", "language": "Inglese", "foreign": "hinge", "italian": "cardine / cerniera", "accepted": ["hinge"] },
+        { "id": "v10", "language": "Tedesco", "foreign": "Seife", "italian": "sapone", "accepted": ["Seife"] },
+        { "id": "v11", "language": "Tedesco", "foreign": "Zwiebel", "italian": "cipolla", "accepted": ["Zwiebel"] },
+        { "id": "v12", "language": "Tedesco", "foreign": "Taube", "italian": "piccione", "accepted": ["Taube"] }
       ],
       "recallOrder": [
-        "v17", "v04", "v12", "v07", "v20",
-        "v01", "v15", "v09", "v16", "v03",
-        "v11", "v06", "v19", "v02", "v14",
-        "v10", "v18", "v05", "v13", "v08"
+        "v02", "v03", "v01",
+        "v06", "v04", "v05",
+        "v08", "v09", "v07",
+        "v12", "v10", "v11"
       ]
     },
     {
@@ -235,64 +119,21 @@
       "type": "math",
       "enabled": true,
       "title": "Formula matematica e applicazione",
-      "instructionStudy": "Memorizza la formula, la forma dell'equazione della retta e il significato di tutti i simboli (2 minuti).",
-      "instructionRecall": "Seleziona le espressioni corrette e applica la formula passo dopo passo sul nuovo esercizio numerico.",
+      "instructionStudy": "Memorizza la formula, la forma dell'equazione della retta e il significato dei simboli (2 minuti).",
+      "instructionRecall": "Applica la formula memorizzata sul nuovo esercizio senza calcolatrice e scrivi direttamente il risultato finale (3 minuti).",
       "studySeconds": 120,
       "recallSeconds": 180,
       "maxRecallPoints": 5,
       "maxComprehensionPoints": 5,
       "formulaName": "Distanza punto-retta nel piano cartesiano",
       "studyHtml": "<div class=\"math-study-card\"><p><strong>Distanza euclidea (ortogonale) tra un punto e una retta:</strong></p><p class=\"math-formula-main\"><strong>d(P, r) = |a &middot; x<sub>0</sub> + b &middot; y<sub>0</sub> + c| / &radic;(a<sup>2</sup> + b<sup>2</sup>)</strong></p><p><strong>Equazione implicita della retta r:</strong></p><p class=\"math-formula-sub\"><strong>a &middot; x + b &middot; y + c = 0</strong></p><ul><li><strong>d(P, r)</strong>: distanza minima (ortogonale) tra il punto P e la retta r</li><li><strong>P(x<sub>0</sub>, y<sub>0</sub>)</strong>: coordinate cartesiane del punto P</li><li><strong>a, b, c</strong>: coefficienti reali della retta in forma implicita (con <em>a</em> e <em>b</em> non entrambi nulli)</li></ul></div>",
-      "recallQuestions": [
-        {
-          "id": "math_b_1",
-          "dimension": "recall",
-          "points": 2,
-          "prompt": "Qual è la formula corretta per la distanza d(P, r) tra il punto P(x₀, y₀) e la retta r?",
-          "choices": [
-            { "id": "a", "text": "d(P, r) = |a·x₀ + b·y₀ + c| / √(a² + b²)" },
-            { "id": "b", "text": "d(P, r) = |a·x₀ + b·y₀ + c| / (a² + b²)" },
-            { "id": "c", "text": "d(P, r) = (a·x₀ + b·y₀) / √(x₀² + y₀²)" },
-            { "id": "d", "text": "d(P, r) = |a·x₀ + b·y₀ + c| / √(a² − b²)" }
-          ],
-          "correctId": "a"
-        },
-        {
-          "id": "math_b_2",
-          "dimension": "recall",
-          "points": 2,
-          "prompt": "In quale forma deve essere espressa la retta r per applicare direttamente la formula?",
-          "choices": [
-            { "id": "a", "text": "y = m·x + q" },
-            { "id": "b", "text": "a·x + b·y + c = 0" },
-            { "id": "c", "text": "x / a + y / b = 0" },
-            { "id": "d", "text": "(x − a)² + (y − b)² = c²" }
-          ],
-          "correctId": "b"
-        },
-        {
-          "id": "math_b_3",
-          "dimension": "recall",
-          "points": 1,
-          "prompt": "Quale significato e condizione hanno i simboli nella formula?",
-          "choices": [
-            { "id": "a", "text": "x₀, y₀ sono i coefficienti della retta; a, b, c sono le coordinate del punto" },
-            { "id": "b", "text": "a e b sono sempre uguali a 1; c è la distanza ricercata" },
-            { "id": "c", "text": "x₀, y₀ sono le coordinate del punto P; a, b, c sono i coefficienti della retta con a e b non entrambi nulli" },
-            { "id": "d", "text": "Il valore assoluto al numeratore serve solo quando x₀ è negativo" }
-          ],
-          "correctId": "c"
-        }
-      ],
       "applicationProblem": {
-        "promptText": "Dati il punto P(2, 1) e la retta r: 3x + 4y - 5 = 0:",
-        "intermediatePrompt": "Quanto vale il denominatore √(a² + b²)?",
-        "expectedIntermediate": 5,
-        "intermediatePoints": 2,
-        "finalPrompt": "Quanto vale la distanza d(P, r)?",
+        "promptText": "Calcola la distanza d del punto P(2, 1) dalla retta r: 3x + 4y - 5 = 0 (senza calcolatrice).",
+        "finalPrompt": "Distanza d =",
         "expectedNumeric": 1,
         "tolerance": 0.01,
-        "finalPoints": 3
+        "recallPoints": 5,
+        "compPoints": 5
       }
     },
     {
@@ -300,10 +141,10 @@
       "type": "dates",
       "enabled": true,
       "title": "5 date storiche poco note",
-      "instructionStudy": "Memorizza per ciascuno dei 5 eventi l'anno esatto e il dettaglio chiave che lo spiega (3 minuti).",
-      "instructionRecall": "Per ogni evento (in ordine mescolato), inserisci l'anno esatto a 4 cifre e rispondi alla domanda sul dettaglio storico.",
+      "instructionStudy": "Memorizza per ciascuno dei 5 eventi l'anno esatto e la spiegazione storica (3 minuti).",
+      "instructionRecall": "Per ogni evento (in ordine mescolato), scrivi l'anno esatto a 4 cifre e scegli l'unica spiegazione corretta tra le 4 alternative (3 minuti e 30 secondi).",
       "studySeconds": 180,
-      "recallSeconds": 180,
+      "recallSeconds": 210,
       "maxRecallPoints": 10,
       "maxComprehensionPoints": 5,
       "items": [
@@ -311,13 +152,14 @@
           "id": "d1",
           "year": 1637,
           "yearPoints": 2,
-          "studyEvent": "1637 — Nei Paesi Bassi scoppia e crolla improvvisamente la bolla speculativa dei tulipani (Tulipomania): durante il Secolo d'oro olandese bulbi rari e contratti a termine raggiungono prezzi esorbitanti fino al crollo del febbraio 1637.",
-          "recallPrompt": "Nei Paesi Bassi scoppia e crolla improvvisamente la prima grande bolla speculativa documentata della storia.",
-          "detailQuestion": "Quale bene fu al centro di quella celebre bolla speculativa?",
+          "studyEvent": "1637 — Nei Paesi Bassi scoppia e crolla improvvisamente la bolla speculativa dei tulipani (Tulipomania): durante il Secolo d'oro olandese bulbi rari e contratti a termine scambiati nelle taverne raggiungono prezzi esorbitanti fino al crollo del febbraio 1637.",
+          "recallPrompt": "Il crollo finanziario olandese passato alla storia come prima grande bolla speculativa.",
+          "detailQuestion": "Quale mercato e meccanismo scatenarono la bolla nei Paesi Bassi?",
           "detailChoices": [
-            { "id": "a", "text": "I carichi di pepe e noce moscata delle Indie Orientali" },
-            { "id": "b", "text": "I bulbi rari di tulipano e i relativi contratti a termine" },
-            { "id": "c", "text": "Le azioni delle fornaci di porcellana blu di Delft" }
+            { "id": "a", "text": "I titoli obbligazionari della Compagnia Olandese delle Indie Orientali" },
+            { "id": "b", "text": "I contratti a termine su bulbi rari di tulipano scambiati nelle taverne" },
+            { "id": "c", "text": "Le quote speculative sulle spedizioni di spezie e porcellane da Giava" },
+            { "id": "d", "text": "I certificati di credito legati alle grandi bonifiche dei polder" }
           ],
           "correctDetailId": "b",
           "detailPoints": 1
@@ -326,13 +168,14 @@
           "id": "d2",
           "year": 1735,
           "yearPoints": 2,
-          "studyEvent": "1735 — John Harrison completa il primo cronometro marino H1: un orologio di precisione capace di mantenere l'ora di riferimento nonostante rollio e sbalzi termici, per risolvere il problema della longitudine in mare.",
-          "recallPrompt": "L'orologiaio inglese John Harrison completa il primo cronometro marino (H1) per la navigazione oceanica.",
-          "detailQuestion": "Quale problema fondamentale di navigazione permetteva di risolvere lo strumento H1?",
+          "studyEvent": "1735 — John Harrison completa il primo cronometro marino H1: un orologio di precisione capace di mantenere l'ora di riferimento nonostante rollio e sbalzi termici, per determinare la longitudine in mare.",
+          "recallPrompt": "Il completamento del primo cronometro marino H1 da parte dell'orologiaio inglese John Harrison.",
+          "detailQuestion": "Quale problema concreto della navigazione oceanica mirava a risolvere l'H1?",
           "detailChoices": [
-            { "id": "a", "text": "Calcolare la longitudine in mare mantenendo l'ora di riferimento nonostante rollio e sbalzi termici" },
-            { "id": "b", "text": "Misurare la latitudine compensando la declinazione magnetica delle bussole" },
-            { "id": "c", "text": "Prevedere la profondità dei fondali tramite la pressione barometrica" }
+            { "id": "a", "text": "Determinare la longitudine in mare mantenendo l'ora esatta nonostante rollio e sbalzi termici" },
+            { "id": "b", "text": "Calcolare la latitudine di notte compensando gli errori dei quadranti nautici" },
+            { "id": "c", "text": "Misurare la velocità reale della nave rispetto alle correnti oceaniche profonde" },
+            { "id": "d", "text": "Correggere la deviazione magnetica delle bussole di bordo vicino alle coste rocciose" }
           ],
           "correctDetailId": "a",
           "detailPoints": 1
@@ -342,42 +185,45 @@
           "year": 1839,
           "yearPoints": 2,
           "studyEvent": "1839 — Il 19 agosto all'Accademia delle Scienze di Parigi, Louis Daguerre presenta ufficialmente il dagherrotipo: il primo procedimento fotografico praticabile su lastre di rame argentato sensibilizzate allo iodio e sviluppate ai vapori di mercurio.",
-          "recallPrompt": "Louis Daguerre presenta ufficialmente il dagherrotipo all'Accademia delle Scienze di Parigi.",
-          "detailQuestion": "Su quale supporto e procedimento si basava il dagherrotipo?",
+          "recallPrompt": "La presentazione pubblica del dagherrotipo all'Accademia delle Scienze di Parigi.",
+          "detailQuestion": "Su quale supporto e reazione chimica si basava il procedimento di Daguerre?",
           "detailChoices": [
-            { "id": "a", "text": "Rullini flessibili in celluloide sviluppati in bagno di gelatina" },
-            { "id": "b", "text": "Lastre di vetro ricoperte con pigmenti vegetali fotosensibili" },
-            { "id": "c", "text": "Lastre di rame argentato sensibilizzate allo iodio e sviluppate a vapori di mercurio" }
+            { "id": "a", "text": "Fogli di carta cerata sensibilizzati al nitrato d'argento e fissati con sale marino" },
+            { "id": "b", "text": "Lastre di vetro spalmate di collodio umido e immerse in solfato ferroso" },
+            { "id": "c", "text": "Pellicole trasparenti di nitrocellulosa esposte attraverso lenti acromatiche" },
+            { "id": "d", "text": "Lastre di rame argentato sensibilizzate allo iodio e sviluppate ai vapori di mercurio" }
           ],
-          "correctDetailId": "c",
+          "correctDetailId": "d",
           "detailPoints": 1
         },
         {
           "id": "d4",
           "year": 1871,
           "yearPoints": 2,
-          "studyEvent": "1871 — Il 28 dicembre Antonio Meucci deposita all'ufficio brevetti statunitense il «caveat» (brevetto provvisorio n. 3335) per il telettrofono, perché non disponeva dei fondi necessari per il brevetto definitivo.",
-          "recallPrompt": "Antonio Meucci deposita negli Stati Uniti un «caveat» (brevetto provvisorio) per il telettrofono.",
-          "detailQuestion": "Perché Meucci depositò un caveat provvisorio anziché il brevetto definitivo completo?",
+          "studyEvent": "1871 — Il 28 dicembre Antonio Meucci deposita all'ufficio brevetti statunitense il «caveat» (brevetto provvisorio n. 3335) per il telettrofono, perché non disponeva della somma necessaria per le tasse del brevetto definitivo.",
+          "recallPrompt": "Il deposito del «caveat» n. 3335 di Antonio Meucci per il telettrofono negli Stati Uniti.",
+          "detailQuestion": "Per quale ragione pratica Meucci ricorse al caveat provvisorio anziché al brevetto definitivo?",
           "detailChoices": [
-            { "id": "a", "text": "Perché non aveva i fondi necessari per sostenere il costo del brevetto definitivo" },
-            { "id": "b", "text": "Perché la legge statunitense vietava agli inventori italiani di ottenere brevetti completi" },
-            { "id": "c", "text": "Perché non aveva ancora costruito alcun modello funzionante del dispositivo" }
+            { "id": "a", "text": "Perché la procedura di brevetto definitivo richiedeva già la posa di cavi urbani funzionanti" },
+            { "id": "b", "text": "Perché l'ufficio brevetti concedeva ai residenti non nativi solo registrazioni annuali provvisorie" },
+            { "id": "c", "text": "Perché non disponeva della somma necessaria per pagare le tasse del brevetto definitivo" },
+            { "id": "d", "text": "Perché intendeva attendere l'esito di una causa legale già avviata contro la Western Union" }
           ],
-          "correctDetailId": "a",
+          "correctDetailId": "c",
           "detailPoints": 1
         },
         {
           "id": "d5",
           "year": 1919,
           "yearPoints": 2,
-          "studyEvent": "1919 — Il 15 gennaio a Boston si verifica la Grande alluvione di melassa (Great Molasses Flood): nel North End cede un enorme serbatoio della Purity Distilling Company rilasciando un'onda viscosa di circa 8,7 milioni di litri di melassa.",
-          "recallPrompt": "Nel quartiere North End di Boston si verifica un'insolita e catastrofica alluvione industriale.",
-          "detailQuestion": "Che cosa invase le strade dopo il cedimento di un enorme serbatoio?",
+          "studyEvent": "1919 — Il 15 gennaio a Boston si verifica la Grande alluvione di melassa (Great Molasses Flood): nel North End cede un enorme serbatoio della Purity Distilling Company rilasciando quasi nove milioni di litri di melassa viscosa stoccata per distillazione.",
+          "recallPrompt": "La catastrofica alluvione industriale nel quartiere North End di Boston.",
+          "detailQuestion": "Che cosa provocò l'onda che travolse il quartiere dopo il cedimento di un enorme serbatoio?",
           "detailChoices": [
-            { "id": "a", "text": "Petrolio greggio bollente fuoriuscito da una raffineria portuale" },
-            { "id": "b", "text": "Un'enorme onda viscosa di melassa (circa 8,7 milioni di litri)" },
-            { "id": "c", "text": "Acqua marina e blocchi di ghiaccio dopo il crollo di una diga foranea" }
+            { "id": "a", "text": "La fuoriuscita di greggio denso da un deposito portuale destinato alle navi mercantili" },
+            { "id": "b", "text": "Il rilascio improvviso di quasi nove milioni di litri di melassa viscosa stoccata per distillazione" },
+            { "id": "c", "text": "Il collasso simultaneo di tre cisterne di olio di balena raffinato vicino ai moli" },
+            { "id": "d", "text": "L'esondazione di un bacino di acque reflue industriali provenienti dalle concerie del porto" }
           ],
           "correctDetailId": "b",
           "detailPoints": 1

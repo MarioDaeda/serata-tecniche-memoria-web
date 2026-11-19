@@ -1,8 +1,8 @@
 {
   "testId": "A",
   "title": "Test A — Batteria Iniziale",
-  "subtitle": "Prova iniziale · 6 sezioni cronometrate · 100 punti",
-  "rubricTotal": 100,
+  "subtitle": "6 sezioni · 92 punti totali · 0 suggerimenti",
+  "rubricTotal": 92,
   "sections": [
     {
       "id": "cifre",
@@ -10,9 +10,9 @@
       "enabled": true,
       "title": "Sequenza di 30 cifre",
       "instructionStudy": "Memorizza le 30 cifre nell'ordine esatto da sinistra a destra (3 minuti).",
-      "instructionRecall": "Inserisci le 30 cifre nell'ordine esatto. Se non ricordi una cifra, usa «Salta casella» per non spostare le successive.",
+      "instructionRecall": "Inserisci le 30 cifre nell'ordine esatto. Se non ricordi una cifra, usa «Salta casella» per non spostare le successive (3 minuti).",
       "studySeconds": 180,
-      "recallSeconds": 120,
+      "recallSeconds": 180,
       "maxRecallPoints": 30,
       "maxComprehensionPoints": 0,
       "digits": "582040143607731964288790356216"
@@ -22,136 +22,27 @@
       "type": "chemistry",
       "enabled": true,
       "title": "Struttura chimica",
-      "instructionStudy": "Osserva con attenzione la struttura della molecola: tipo di anello, doppi legami, ramificazioni e gruppo terminale (3 minuti).",
-      "instructionRecall": "Seleziona la struttura esatta tra le 4 varianti e rispondi alle 6 domande sui dettagli strutturali.",
+      "mode": "free_draw_selfcheck",
+      "instructionStudy": "Osserva e memorizza la struttura chimica completa: anello, doppi legami, ramificazioni e gruppo terminale (3 minuti).",
+      "instructionRecall": "Disegna liberamente la struttura chimica memorizzata (su schermo o su carta) senza aiuti. Al termine potrai confrontarla con l'originale.",
       "studySeconds": 180,
-      "recallSeconds": 120,
-      "maxRecallPoints": 8,
-      "maxComprehensionPoints": 2,
+      "recallSeconds": 150,
+      "maxRecallPoints": 10,
+      "maxComprehensionPoints": 0,
       "moleculeName": "Retinolo all-trans",
       "formula": "C₂₀H₃₀O",
       "studySvgPath": "assets/svg/test_A/retinolo_corretto.svg",
-      "variantQuestion": {
-        "prompt": "Quale delle quattro strutture corrisponde esattamente al Retinolo all-trans appena studiato?",
-        "points": 4,
-        "dimension": "recall",
-        "options": [
-          {
-            "id": "v1",
-            "label": "Struttura A",
-            "svgPath": "assets/svg/test_A/retinolo_dist_anello.svg",
-            "isCorrect": false
-          },
-          {
-            "id": "v2",
-            "label": "Struttura B",
-            "svgPath": "assets/svg/test_A/retinolo_corretto.svg",
-            "isCorrect": true
-          },
-          {
-            "id": "v3",
-            "label": "Struttura C",
-            "svgPath": "assets/svg/test_A/retinolo_dist_metili.svg",
-            "isCorrect": false
-          },
-          {
-            "id": "v4",
-            "label": "Struttura D",
-            "svgPath": "assets/svg/test_A/retinolo_dist_terminale.svg",
-            "isCorrect": false
-          }
-        ]
-      },
-      "detailQuestions": [
-        {
-          "id": "chem_a_1",
-          "dimension": "recall",
-          "points": 1,
-          "prompt": "Quale tipo di anello si trova all'estremità sinistra della molecola?",
-          "choices": [
-            { "id": "a", "text": "Un anello benzenico aromatico con 3 doppi legami" },
-            { "id": "b", "text": "Un anello cicloesenico a 6 termini con 1 doppio legame interno" },
-            { "id": "c", "text": "Un anello pirrolico a 5 termini con un atomo di azoto" },
-            { "id": "d", "text": "Un anello cicloesanico saturo privo di doppi legami" }
-          ],
-          "correctId": "b"
-        },
-        {
-          "id": "chem_a_2",
-          "dimension": "recall",
-          "points": 1,
-          "prompt": "Quanti doppi legami C=C coniugati (tutti trans) sono presenti lungo la catena aperta?",
-          "choices": [
-            { "id": "a", "text": "2 doppi legami coniugati" },
-            { "id": "b", "text": "3 doppi legami coniugati" },
-            { "id": "c", "text": "4 doppi legami coniugati" },
-            { "id": "d", "text": "5 doppi legami coniugati" }
-          ],
-          "correctId": "c"
-        },
-        {
-          "id": "chem_a_3",
-          "dimension": "recall",
-          "points": 1,
-          "prompt": "Quanti gruppi metilici (-CH₃) ramificati sono presenti in totale tra anello e catena?",
-          "choices": [
-            { "id": "a", "text": "3 metili (2 sull'anello e 1 sulla catena)" },
-            { "id": "b", "text": "4 metili (2 sull'anello e 2 sulla catena)" },
-            { "id": "c", "text": "6 metili (4 sull'anello e 2 sulla catena)" },
-            { "id": "d", "text": "5 metili (3 sull'anello e 2 sulla catena)" }
-          ],
-          "correctId": "d"
-        },
-        {
-          "id": "chem_a_4",
-          "dimension": "recall",
-          "points": 1,
-          "prompt": "Quale gruppo funzionale chiude l'estremità destra della catena?",
-          "choices": [
-            { "id": "a", "text": "Un gruppo alcolico (-OH)" },
-            { "id": "b", "text": "Un gruppo carbossilico (-COOH)" },
-            { "id": "c", "text": "Un gruppo metossi (-OCH₃)" },
-            { "id": "d", "text": "Un gruppo acetammidico (-NH-C(=O)-CH₃)" }
-          ],
-          "correctId": "a"
-        },
-        {
-          "id": "chem_a_5",
-          "dimension": "comprehension",
-          "points": 1,
-          "prompt": "Perché l'anello a 6 termini del retinolo non può essere un anello benzenico aromatico?",
-          "choices": [
-            { "id": "a", "text": "Perché un vertice porta due metili sullo stesso carbonio (gem-dimetile saturo) e nell'anello c'è un solo doppio legame C=C" },
-            { "id": "b", "text": "Perché l'anello include un atomo di ossigeno al posto di un carbonio" },
-            { "id": "c", "text": "Perché l'anello possiede 5 vertici anziché 6" },
-            { "id": "d", "text": "Perché la catena laterale impedisce geometricamente qualsiasi doppio legame nell'anello" }
-          ],
-          "correctId": "a"
-        },
-        {
-          "id": "chem_a_6",
-          "dimension": "comprehension",
-          "points": 1,
-          "prompt": "Come prosegue la coniugazione dei doppi legami tra l'anello e il gruppo terminale?",
-          "choices": [
-            { "id": "a", "text": "I doppi legami sulla catena sono separati ciascuno da tre legami singoli consecutivi" },
-            { "id": "b", "text": "Il doppio legame interno dell'anello e i 4 doppi legami della catena si alternano regolarmente con legami singoli fino al carbonio prima del -CH₂OH" },
-            { "id": "c", "text": "L'atomo di ossigeno terminale forma un doppio legame C=O coniugato con la catena" },
-            { "id": "d", "text": "I due metili sulla catena si chiudono sull'anello creando un sistema biciclico aromatico" }
-          ],
-          "correctId": "b"
-        }
-      ]
+      "selfCheckCriteria": "Verifica: anello cicloesenico con 1 doppio legame interno e 3 metili (2 sullo stesso carbonio + 1), catena aperta di 9 carboni con 4 doppi legami coniugati all-trans, 2 metili sulla catena e gruppo alcolico -OH terminale."
     },
     {
       "id": "parole",
       "type": "words",
       "enabled": true,
       "title": "Elenco di 15 parole",
-      "instructionStudy": "Memorizza queste 15 parole nell'ordine esatto dall'alto verso il basso (2 minuti).",
-      "instructionRecall": "Scrivi le 15 parole nella posizione esatta in cui le hai studiate dall'alto verso il basso.",
-      "studySeconds": 120,
-      "recallSeconds": 120,
+      "instructionStudy": "Memorizza queste 15 parole nell'ordine esatto dall'alto verso il basso (2 minuti e 30 secondi).",
+      "instructionRecall": "Scrivi le 15 parole nella posizione esatta in cui le hai memorizzate dall'alto verso il basso (3 minuti).",
+      "studySeconds": 150,
+      "recallSeconds": 180,
       "maxRecallPoints": 15,
       "maxComprehensionPoints": 0,
       "showNumbersInStudy": false,
@@ -194,40 +85,33 @@
       "id": "vocaboli",
       "type": "vocab",
       "enabled": true,
-      "title": "20 vocaboli in 4 lingue",
-      "instructionStudy": "Memorizza i 20 vocaboli stranieri con il rispettivo significato italiano (4 minuti). Se conoscevi già una parola, potrai segnalarlo in risposta.",
-      "instructionRecall": "Traduci dall'italiano nella lingua indicata (l'ordine è mescolato). Spunta «Già nota» solo per i vocaboli che conoscevi già prima di stasera.",
-      "studySeconds": 240,
-      "recallSeconds": 180,
-      "maxRecallPoints": 20,
+      "title": "12 vocaboli in 4 lingue",
+      "instructionStudy": "Memorizza i 12 vocaboli stranieri con la rispettiva traduzione italiana (6 minuti — 30 secondi per vocabolo).",
+      "instructionRecall": "Scrivi la traduzione nella lingua indicata (raggruppati per lingua, ordine interno mescolato). Spunta «Già nota» solo se conoscevi già il termine prima di questa serata (4 minuti).",
+      "studySeconds": 360,
+      "recallSeconds": 240,
+      "maxRecallPoints": 12,
       "maxComprehensionPoints": 0,
+      "groupByLanguageInRecall": true,
       "items": [
         { "id": "v01", "language": "Spagnolo", "foreign": "bellota", "italian": "ghianda", "accepted": ["bellota"] },
         { "id": "v02", "language": "Spagnolo", "foreign": "candado", "italian": "lucchetto", "accepted": ["candado"] },
-        { "id": "v03", "language": "Spagnolo", "foreign": "charco", "italian": "pozzanghera", "accepted": ["charco"] },
-        { "id": "v04", "language": "Spagnolo", "foreign": "erizo", "italian": "riccio", "accepted": ["erizo"] },
-        { "id": "v05", "language": "Spagnolo", "foreign": "gusano", "italian": "verme", "accepted": ["gusano"] },
-        { "id": "v06", "language": "Francese", "foreign": "hibou", "italian": "gufo", "accepted": ["hibou"] },
-        { "id": "v07", "language": "Francese", "foreign": "caillou", "italian": "sasso", "accepted": ["caillou"] },
-        { "id": "v08", "language": "Francese", "foreign": "rideau", "italian": "tenda", "accepted": ["rideau"] },
-        { "id": "v09", "language": "Francese", "foreign": "navet", "italian": "rapa", "accepted": ["navet"] },
-        { "id": "v10", "language": "Francese", "foreign": "bougie", "italian": "candela", "accepted": ["bougie"] },
-        { "id": "v11", "language": "Inglese", "foreign": "thimble", "italian": "ditale", "accepted": ["thimble"] },
-        { "id": "v12", "language": "Inglese", "foreign": "badger", "italian": "tasso, animale", "accepted": ["badger"] },
-        { "id": "v13", "language": "Inglese", "foreign": "stork", "italian": "cicogna", "accepted": ["stork"] },
-        { "id": "v14", "language": "Inglese", "foreign": "moth", "italian": "falena", "accepted": ["moth"] },
-        { "id": "v15", "language": "Inglese", "foreign": "skillet", "italian": "padella", "accepted": ["skillet"] },
-        { "id": "v16", "language": "Tedesco", "foreign": "Kissen", "italian": "cuscino", "accepted": ["Kissen"] },
-        { "id": "v17", "language": "Tedesco", "foreign": "Eimer", "italian": "secchio", "accepted": ["Eimer"] },
-        { "id": "v18", "language": "Tedesco", "foreign": "Gabel", "italian": "forchetta", "accepted": ["Gabel"] },
-        { "id": "v19", "language": "Tedesco", "foreign": "Schnecke", "italian": "chiocciola", "accepted": ["Schnecke"] },
-        { "id": "v20", "language": "Tedesco", "foreign": "Ente", "italian": "anatra", "accepted": ["Ente"] }
+        { "id": "v03", "language": "Spagnolo", "foreign": "erizo", "italian": "riccio", "accepted": ["erizo"] },
+        { "id": "v04", "language": "Francese", "foreign": "hibou", "italian": "gufo", "accepted": ["hibou"] },
+        { "id": "v05", "language": "Francese", "foreign": "rideau", "italian": "tenda", "accepted": ["rideau"] },
+        { "id": "v06", "language": "Francese", "foreign": "bougie", "italian": "candela", "accepted": ["bougie"] },
+        { "id": "v07", "language": "Inglese", "foreign": "thimble", "italian": "ditale", "accepted": ["thimble"] },
+        { "id": "v08", "language": "Inglese", "foreign": "badger", "italian": "tasso (animale)", "accepted": ["badger"] },
+        { "id": "v09", "language": "Inglese", "foreign": "skillet", "italian": "padella", "accepted": ["skillet"] },
+        { "id": "v10", "language": "Tedesco", "foreign": "Kissen", "italian": "cuscino", "accepted": ["Kissen"] },
+        { "id": "v11", "language": "Tedesco", "foreign": "Gabel", "italian": "forchetta", "accepted": ["Gabel"] },
+        { "id": "v12", "language": "Tedesco", "foreign": "Schnecke", "italian": "chiocciola", "accepted": ["Schnecke"] }
       ],
       "recallOrder": [
-        "v16", "v03", "v11", "v06", "v19",
-        "v01", "v15", "v08", "v17", "v05",
-        "v12", "v10", "v18", "v02", "v14",
-        "v07", "v20", "v04", "v13", "v09"
+        "v03", "v01", "v02",
+        "v05", "v06", "v04",
+        "v09", "v07", "v08",
+        "v11", "v12", "v10"
       ]
     },
     {
@@ -235,64 +119,21 @@
       "type": "math",
       "enabled": true,
       "title": "Formula matematica e applicazione",
-      "instructionStudy": "Memorizza la formula, il significato di tutti i simboli e le condizioni d'uso (2 minuti).",
-      "instructionRecall": "Seleziona le espressioni corrette e applica la formula passo dopo passo sul nuovo esercizio numerico.",
+      "instructionStudy": "Memorizza la formula e il significato dei simboli (2 minuti).",
+      "instructionRecall": "Applica la formula memorizzata sul nuovo esercizio senza calcolatrice e scrivi direttamente il risultato finale (3 minuti).",
       "studySeconds": 120,
       "recallSeconds": 180,
       "maxRecallPoints": 5,
       "maxComprehensionPoints": 5,
       "formulaName": "Formula di Erone",
       "studyHtml": "<div class=\"math-study-card\"><p><strong>Area del triangolo noti i tre lati:</strong></p><p class=\"math-formula-main\"><strong>A = &radic;[p &middot; (p &minus; a) &middot; (p &minus; b) &middot; (p &minus; c)]</strong></p><p><strong>Formula ausiliaria (semiperimetro):</strong></p><p class=\"math-formula-sub\"><strong>p = (a + b + c) / 2</strong></p><ul><li><strong>A</strong>: area del triangolo</li><li><strong>a, b, c</strong>: lunghezze dei tre lati del triangolo (con <em>a, b, c &gt; 0</em> e disuguaglianza triangolare soddisfatta)</li><li><strong>p</strong>: semiperimetro del triangolo</li></ul></div>",
-      "recallQuestions": [
-        {
-          "id": "math_a_1",
-          "dimension": "recall",
-          "points": 2,
-          "prompt": "Qual è la formula principale corretta di Erone per l'area A del triangolo?",
-          "choices": [
-            { "id": "a", "text": "A = √[p · (p − a) · (p − b) · (p − c)]" },
-            { "id": "b", "text": "A = √[(p − a) · (p − b) · (p − c)]" },
-            { "id": "c", "text": "A = √[p · (p + a) · (p + b) · (p + c)]" },
-            { "id": "d", "text": "A = p · (p − a) · (p − b) · (p − c)" }
-          ],
-          "correctId": "a"
-        },
-        {
-          "id": "math_a_2",
-          "dimension": "recall",
-          "points": 2,
-          "prompt": "Qual è la formula ausiliaria corretta per il parametro p?",
-          "choices": [
-            { "id": "a", "text": "p = a + b + c" },
-            { "id": "b", "text": "p = (a + b + c) / 3" },
-            { "id": "c", "text": "p = (a + b + c) / 2" },
-            { "id": "d", "text": "p = (a · b · c) / 2" }
-          ],
-          "correctId": "c"
-        },
-        {
-          "id": "math_a_3",
-          "dimension": "recall",
-          "points": 1,
-          "prompt": "Che cosa rappresentano i simboli p e a, b, c nella formula di Erone?",
-          "choices": [
-            { "id": "a", "text": "p è il perimetro totale; a, b, c sono gli angoli interni del triangolo" },
-            { "id": "b", "text": "p è il semiperimetro; a, b, c sono le lunghezze dei tre lati del triangolo" },
-            { "id": "c", "text": "p è l'altezza principale; a, b, c sono le tre mediane del triangolo" },
-            { "id": "d", "text": "p è il raggio inscritto; a, b sono i cateti e c è l'ipotenusa" }
-          ],
-          "correctId": "b"
-        }
-      ],
       "applicationProblem": {
-        "promptText": "Calcola per un triangolo di lati a = 5, b = 5, c = 6:",
-        "intermediatePrompt": "Quanto vale il semiperimetro p?",
-        "expectedIntermediate": 8,
-        "intermediatePoints": 2,
-        "finalPrompt": "Quanto vale l'area A?",
-        "expectedNumeric": 12,
+        "promptText": "Calcola l'area A di un triangolo con lati a = 4, b = 13 e c = 15 (senza calcolatrice).",
+        "finalPrompt": "Area A =",
+        "expectedNumeric": 24,
         "tolerance": 0.01,
-        "finalPoints": 3
+        "recallPoints": 5,
+        "compPoints": 5
       }
     },
     {
@@ -300,10 +141,10 @@
       "type": "dates",
       "enabled": true,
       "title": "5 date storiche poco note",
-      "instructionStudy": "Memorizza per ciascuno dei 5 eventi l'anno esatto e il dettaglio chiave che lo spiega (3 minuti).",
-      "instructionRecall": "Per ogni evento (in ordine mescolato), inserisci l'anno esatto a 4 cifre e rispondi alla domanda sul dettaglio storico.",
+      "instructionStudy": "Memorizza per ciascuno dei 5 eventi l'anno esatto e la spiegazione storica (3 minuti).",
+      "instructionRecall": "Per ogni evento (in ordine mescolato), scrivi l'anno esatto a 4 cifre e scegli l'unica spiegazione corretta tra le 4 alternative (3 minuti e 30 secondi).",
       "studySeconds": 180,
-      "recallSeconds": 180,
+      "recallSeconds": 210,
       "maxRecallPoints": 10,
       "maxComprehensionPoints": 5,
       "items": [
@@ -311,13 +152,14 @@
           "id": "d1",
           "year": 1628,
           "yearPoints": 2,
-          "studyEvent": "1628 — La nave da guerra svedese Vasa affonda durante il viaggio inaugurale nel porto di Stoccolma: per instabilità strutturale (baricentro alto) una raffica di vento la inclina e l'acqua entra dai portelli bassi dei cannoni lasciati aperti.",
-          "recallPrompt": "La nave da guerra svedese Vasa affonda nel porto di Stoccolma durante il suo viaggio inaugurale.",
-          "detailQuestion": "Quale fu la causa tecnica principale di quel rapido naufragio?",
+          "studyEvent": "1628 — La nave da guerra svedese Vasa affonda durante il viaggio inaugurale nel porto di Stoccolma: il baricentro troppo alto rende lo scafo instabile e una raffica di vento fa entrare acqua dai portelli bassi dei cannoni lasciati aperti.",
+          "recallPrompt": "Il naufragio della nave da guerra svedese Vasa a Stoccolma.",
+          "detailQuestion": "Quale fu la causa diretta del rapido affondamento al viaggio inaugurale?",
           "detailChoices": [
-            { "id": "a", "text": "Uno speronamento da parte di una flotta nemica danese all'uscita del porto" },
-            { "id": "b", "text": "L'instabilità della nave (baricentro alto) che fece entrare acqua dai portelli bassi dei cannoni lasciati aperti" },
-            { "id": "c", "text": "L'esplosione accidentale della polveriera durante i fuochi d'artificio del varo" }
+            { "id": "a", "text": "L'impatto con una secca rocciosa non segnalata all'imboccatura del fiordo" },
+            { "id": "b", "text": "L'instabilità per il baricentro alto e l'acqua entrata dai portelli bassi dei cannoni aperti" },
+            { "id": "c", "text": "Un incendio scoppiato nella santabarbara durante le salve di saluto" },
+            { "id": "d", "text": "Il cedimento strutturale del fasciame dovuto a legname non stagionato" }
           ],
           "correctDetailId": "b",
           "detailPoints": 1
@@ -326,43 +168,46 @@
           "id": "d2",
           "year": 1709,
           "yearPoints": 2,
-          "studyEvent": "1709 — Abraham Darby I usa con successo il carbon coke al posto del carbone di legna per fondere il ferro negli altiforni di Coalbrookdale (Inghilterra), superando la scarsità di legname.",
-          "recallPrompt": "Abraham Darby I avvia a Coalbrookdale (Inghilterra) una svolta decisiva per fondere il ferro negli altiforni.",
-          "detailQuestion": "Quale combustibile sostituì il tradizionale carbone di legna negli altiforni?",
+          "studyEvent": "1709 — Abraham Darby I fonde con successo il ferro a Coalbrookdale (Inghilterra) sostituendo il carbone di legna con il carbon coke (ricavato dal carbon fossile), superando la scarsità di legname.",
+          "recallPrompt": "L'innovazione metallurgica di Abraham Darby I negli altiforni di Coalbrookdale.",
+          "detailQuestion": "Quale cambiamento tecnico introdusse Darby nella fusione del ferro?",
           "detailChoices": [
-            { "id": "a", "text": "Il carbon coke (derivato dal carbon fossile)" },
-            { "id": "b", "text": "Il gas illuminante estratto dalla torba" },
-            { "id": "c", "text": "L'olio di balena raffinato ad alta pressione" }
+            { "id": "a", "text": "L'aggiunta di calcare polverizzato per eliminare le scorie di zolfo" },
+            { "id": "b", "text": "L'uso di mantici idraulici doppi per innalzare la temperatura dell'aria" },
+            { "id": "c", "text": "La sostituzione del carbone di legna con il carbon coke ricavato dal carbon fossile" },
+            { "id": "d", "text": "La costruzione di crogioli chiusi in argilla refrattaria ad alta pressione" }
           ],
-          "correctDetailId": "a",
+          "correctDetailId": "c",
           "detailPoints": 1
         },
         {
           "id": "d3",
           "year": 1817,
           "yearPoints": 2,
-          "studyEvent": "1817 — A Mannheim, Karl Drais compie la prima uscita con la Laufmaschine (draisina), antenata della bicicletta: un veicolo in legno a due ruote senza pedali, sterzante e spinto direttamente coi piedi.",
-          "recallPrompt": "Karl Drais compie a Mannheim la prima uscita pubblica con la sua Laufmaschine (draisina).",
-          "detailQuestion": "Com'era costruita e azionata questa antenata della bicicletta?",
+          "studyEvent": "1817 — A Mannheim, Karl Drais compie la prima uscita con la Laufmaschine (draisina), antenata della bicicletta: un veicolo in legno a due ruote allineate, con manubrio sterzante, senza pedali, spinto coi piedi a terra.",
+          "recallPrompt": "La prima uscita pubblica della Laufmaschine (draisina) di Karl Drais a Mannheim.",
+          "detailQuestion": "Come funzionava il primo modello presentato da Karl Drais?",
           "detailChoices": [
-            { "id": "a", "text": "Veicolo in acciaio a tre ruote con trasmissione a catena e pedali anteriori" },
-            { "id": "b", "text": "Carretto a vapore alimentato a carbone con manubrio posteriore" },
-            { "id": "c", "text": "Veicolo in legno a due ruote senza pedali, sterzante e spinto coi piedi sul terreno" }
+            { "id": "a", "text": "Veicolo a due ruote con trasmissione a catena collegata alla ruota posteriore" },
+            { "id": "b", "text": "Triciclo in ferro battuto azionato da due leve manuali oscillanti" },
+            { "id": "c", "text": "Velocipede a due ruote con pedali fissati direttamente al mozzo anteriore" },
+            { "id": "d", "text": "Veicolo in legno a due ruote, sterzante e privo di pedali, spinto coi piedi sul terreno" }
           ],
-          "correctDetailId": "c",
+          "correctDetailId": "d",
           "detailPoints": 1
         },
         {
           "id": "d4",
           "year": 1858,
           "yearPoints": 2,
-          "studyEvent": "1858 — Londra vive la «Grande Puzza» (Great Stink) del Tamigi: un'estate torrida aggrava l'accumulo di scarichi fognari non trattati nel fiume, bloccando il Parlamento e portando all'approvazione rapida del sistema fognario moderno di Joseph Bazalgette.",
-          "recallPrompt": "Londra è colpita dalla cosiddetta «Grande Puzza» (Great Stink) lungo il fiume Tamigi.",
-          "detailQuestion": "Quale conseguenza concreta e duratura provocò quella crisi estiva?",
+          "studyEvent": "1858 — A Londra il caldo estivo aggrava la «Grande Puzza» (Great Stink) del Tamigi per gli scarichi fognari non trattati, paralizzando i lavori parlamentari e sbloccando l'approvazione del grande sistema fognario di Joseph Bazalgette.",
+          "recallPrompt": "La crisi della cosiddetta «Grande Puzza» (Great Stink) sul Tamigi a Londra.",
+          "detailQuestion": "Quale decisione istituzionale sbloccò direttamente quella crisi estiva?",
           "detailChoices": [
-            { "id": "a", "text": "L'approvazione rapida del moderno sistema fognario cittadino progettato da Joseph Bazalgette" },
-            { "id": "b", "text": "Il trasferimento permanente della sede del Parlamento britannico a Oxford" },
-            { "id": "c", "text": "La chiusura per vent'anni di tutte le fonderie e tintorie lungo la costa inglese" }
+            { "id": "a", "text": "L'approvazione rapida della grande rete fognaria intercettatrice di Joseph Bazalgette" },
+            { "id": "b", "text": "Il divieto permanente di scarico industriale per tutte le concerie e tintorie del Middlesex" },
+            { "id": "c", "text": "Il trasferimento temporaneo delle sedute del Parlamento britannico fuori Londra" },
+            { "id": "d", "text": "La costruzione dei primi impianti cittadini di filtrazione a sabbia per l'acqua potabile" }
           ],
           "correctDetailId": "a",
           "detailPoints": 1
@@ -371,15 +216,16 @@
           "id": "d5",
           "year": 1895,
           "yearPoints": 2,
-          "studyEvent": "1895 — Il 27 novembre a Parigi, Alfred Nobel firma al Club Svedese-Norvegese il testamento che destina la maggior parte del proprio patrimonio a premi annuali internazionali in Fisica, Chimica, Medicina, Letteratura e Pace.",
-          "recallPrompt": "Alfred Nobel firma a Parigi il proprio celebre testamento destinando gran parte del patrimonio a un'istituzione internazionale.",
-          "detailQuestion": "Che cosa istituì esattamente quel testamento?",
+          "studyEvent": "1895 — Il 27 novembre a Parigi, Alfred Nobel firma al Club Svedese-Norvegese il testamento che destina la maggior parte del proprio patrimonio all'istituzione dei cinque premi internazionali annuali (Fisica, Chimica, Medicina, Letteratura e Pace).",
+          "recallPrompt": "La firma del celebre testamento di Alfred Nobel a Parigi.",
+          "detailQuestion": "Come veniva destinato il patrimonio secondo le volontà di quel testamento?",
           "detailChoices": [
-            { "id": "a", "text": "Un fondo esclusivo per brevetti militari e miniere svedesi" },
-            { "id": "b", "text": "Premi annuali in Fisica, Chimica, Medicina, Letteratura e Pace" },
-            { "id": "c", "text": "Un'università politecnica gratuita riservata ai soli cittadini francesi" }
+            { "id": "a", "text": "Alla creazione di un istituto politecnico svedese dedicato alle ricerche chimiche" },
+            { "id": "b", "text": "A borse di studio quinquennali per giovani ingegneri europei e nordamericani" },
+            { "id": "c", "text": "All'istituzione di cinque premi annuali in Fisica, Chimica, Medicina, Letteratura e Pace" },
+            { "id": "d", "text": "Al finanziamento di brevetti civili per sostituire gli esplosivi militari in miniera" }
           ],
-          "correctDetailId": "b",
+          "correctDetailId": "c",
           "detailPoints": 1
         }
       ],

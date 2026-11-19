@@ -103,14 +103,48 @@ export function resolveAttemptOnLoad(attempt, enabledSections, mode, now = Date.
   let changed = false;
   let transitionedToCompleted = false;
 
+  const answers = attempt.answers && typeof attempt.answers === "object"
+    ? { ...attempt.answers }
+    : {};
+
   while (phase !== "completed" && now >= phaseEndsAt) {
-    changed = true;
     const currentSec = enabledSections[sectionIndex];
     if (phase === "study") {
-      phase = "recall";
-      phaseStartedAt = phaseEndsAt;
-      phaseEndsAt = phaseStartedAt + (Number(currentSec.recallSeconds) || 120) * 1000;
+      changed = true;
+      if (mode === "study") {
+        sectionIndex += 1;
+        if (sectionIndex >= enabledSections.length) {
+          phase = "completed";
+          completedAt = phaseEndsAt;
+          transitionedToCompleted = true;
+          break;
+        }
+        const nextSec = enabledSections[sectionIndex];
+        phase = "study";
+        phaseStartedAt = phaseEndsAt;
+        phaseEndsAt = phaseStartedAt + (Number(nextSec.studySeconds) || 120) * 1000;
+      } else {
+        phase = "recall";
+        phaseStartedAt = phaseEndsAt;
+        phaseEndsAt = phaseStartedAt + (Number(currentSec.recallSeconds) || 120) * 1000;
+      }
     } else if (phase === "recall") {
+      // Per chimica a disegno libero: allo scadere del timer di disegno passa a selfcheck e attende conferma
+      if (currentSec?.type === "chemistry" && currentSec?.mode === "free_draw_selfcheck") {
+        const chemAns = answers[currentSec.id] && typeof answers[currentSec.id] === "object"
+          ? answers[currentSec.id]
+          : {};
+        if (chemAns.subPhase !== "selfcheck") {
+          answers[currentSec.id] = {
+            ...chemAns,
+            subPhase: "selfcheck"
+          };
+          changed = true;
+        }
+        break;
+      }
+
+      changed = true;
       sectionIndex += 1;
       if (sectionIndex >= enabledSections.length) {
         phase = "completed";
@@ -143,7 +177,8 @@ export function resolveAttemptOnLoad(attempt, enabledSections, mode, now = Date.
     sectionIndex,
     phaseStartedAt,
     phaseEndsAt,
-    completedAt
+    completedAt,
+    answers
   };
   saveAttempt(nextAttempt);
   return { attempt: nextAttempt, changed: true, transitionedToCompleted };

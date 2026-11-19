@@ -13,11 +13,20 @@ export function normalizeText(value) {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/^[.,;:!?'"«»()\-–—]+|[.,;:!?'"«»()\-–—]+$/g, "")
+    .trim()
     .replace(/\s+/g, " ");
 }
 
-function stripGermanArticle(normStr) {
-  return normStr.replace(/^(der|die|das)\s+/i, "").trim();
+function compactLetters(normStr) {
+  return String(normStr || "").replace(/\s+/g, "");
+}
+
+function stripLeadingArticle(normStr) {
+  return String(normStr || "")
+    .replace(/^(?:der|die|das|ein|eine|el|la|los|las|un|una|le|les|the|a|an)\s+/i, "")
+    .replace(/^l['’]\s*/i, "")
+    .trim();
 }
 
 export function levenshteinDistance(a, b) {
@@ -53,18 +62,24 @@ export function levenshteinDistance(a, b) {
 }
 
 function parseNumericAnswer(raw) {
-  const trimmed = String(raw ?? "").trim();
-  if (!trimmed) return Number.NaN;
+  let cleaned = String(raw ?? "").trim();
+  if (!cleaned) return Number.NaN;
 
-  let numericPart = trimmed;
-  const eqMatch = trimmed.match(/^[a-zA-Z0-9_() ,.]*\s*=\s*(-?\d+(?:[.,]\d+)?)$/);
+  const eqMatch = cleaned.match(/^[a-zA-Z0-9_() ,.]*\s*=\s*(.+)$/);
   if (eqMatch) {
-    numericPart = eqMatch[1];
-  } else if (!/^-?\d+(?:[.,]\d+)?$/.test(trimmed)) {
+    cleaned = eqMatch[1].trim();
+  }
+
+  cleaned = cleaned
+    .replace(/\s*(?:u|unita|unità|cm2|cm\^2|cm²|m2|m\^2|m²|cm|m)\s*$/i, "")
+    .replace(/[.,;:\s]+$/g, "")
+    .replace(/\s+/g, "");
+
+  if (!/^-?\d+(?:[.,]\d+)?$/.test(cleaned)) {
     return Number.NaN;
   }
 
-  const parsed = Number(numericPart.replace(",", "."));
+  const parsed = Number(cleaned.replace(",", "."));
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
@@ -118,6 +133,26 @@ function scoreDigitsSection(section, rawAnswer) {
 
 function scoreChemistrySection(section, rawAnswer) {
   const ans = rawAnswer && typeof rawAnswer === "object" ? rawAnswer : {};
+  const maxRecall = Number(section.maxRecallPoints) || 0;
+  const maxComp = Number(section.maxComprehensionPoints) || 0;
+  const max = maxRecall + maxComp;
+
+  if (section.mode === "free_draw_selfcheck" || (!section.variantQuestion && !Array.isArray(section.detailQuestions))) {
+    const isCorrect = ans.selfEval === "correct";
+    const recall = isCorrect ? maxRecall : 0;
+    return {
+      score: round1(recall),
+      max,
+      pct: pct(recall, max),
+      recall: round1(recall),
+      maxRecall,
+      comp: 0,
+      maxComp,
+      usedPaper: Boolean(ans.usedPaper),
+      selfEval: ans.selfEval || null
+    };
+  }
+
   let recall = 0;
   let comp = 0;
 
@@ -148,9 +183,6 @@ function scoreChemistrySection(section, rawAnswer) {
     }
   }
 
-  const maxRecall = Number(section.maxRecallPoints) || 0;
-  const maxComp = Number(section.maxComprehensionPoints) || 0;
-  const max = maxRecall + maxComp;
   const score = round1(recall + comp);
 
   return {
@@ -167,16 +199,24 @@ function scoreChemistrySection(section, rawAnswer) {
 function scoreWordsSection(section, rawAnswer) {
   const expected = Array.isArray(section.words) ? section.words : [];
   const normExpected = expected.map(normalizeText);
-  const normExpectedSet = new Set(normExpected.filter(Boolean));
+  const compactExpected = normExpected.map(compactLetters);
+  const compactToCanonical = new Map();
+  for (let i = 0; i < normExpected.length; i += 1) {
+    if (compactExpected[i] && !compactToCanonical.has(compactExpected[i])) {
+      compactToCanonical.set(compactExpected[i], normExpected[i]);
+    }
+  }
+
   const userWords = Array.isArray(rawAnswer) ? rawAnswer : [];
   const normInputs = expected.map((_, idx) => normalizeText(userWords[idx] ?? ""));
+  const compactInputs = normInputs.map(compactLetters);
 
   let recall = 0;
   const exactIndices = new Set();
   const creditedWords = new Set();
 
   for (let i = 0; i < normExpected.length; i += 1) {
-    if (normInputs[i] && normInputs[i] === normExpected[i]) {
+    if (compactInputs[i] && compactInputs[i] === compactExpected[i]) {
       recall += 1;
       exactIndices.add(i);
       creditedWords.add(normExpected[i]);
@@ -184,10 +224,11 @@ function scoreWordsSection(section, rawAnswer) {
   }
 
   for (let i = 0; i < normExpected.length; i += 1) {
-    if (exactIndices.has(i) || !normInputs[i]) continue;
-    if (normExpectedSet.has(normInputs[i]) && !creditedWords.has(normInputs[i])) {
+    if (exactIndices.has(i) || !compactInputs[i]) continue;
+    const canonical = compactToCanonical.get(compactInputs[i]);
+    if (canonical && !creditedWords.has(canonical)) {
       recall += 0.5;
-      creditedWords.add(normInputs[i]);
+      creditedWords.add(canonical);
     }
   }
 
@@ -223,9 +264,15 @@ function scoreVocabItem(item, entry) {
     return 1;
   }
 
-  const strippedAns = stripGermanArticle(normAns);
-  const strippedCandidates = candidates.map(stripGermanArticle).filter(Boolean);
+  const strippedAns = stripLeadingArticle(normAns);
+  const strippedCandidates = candidates.map(stripLeadingArticle).filter(Boolean);
   if (strippedAns && strippedCandidates.includes(strippedAns)) {
+    return 1;
+  }
+
+  const compactAns = compactLetters(strippedAns || normAns);
+  const compactCandidates = strippedCandidates.map(compactLetters).filter(Boolean);
+  if (compactAns && compactCandidates.includes(compactAns)) {
     return 1;
   }
 
@@ -235,9 +282,9 @@ function scoreVocabItem(item, entry) {
     }
   }
 
-  if (strippedAns) {
-    for (const cand of strippedCandidates) {
-      if (levenshteinDistance(strippedAns, cand) === 1) {
+  if (compactAns) {
+    for (const cand of compactCandidates) {
+      if (levenshteinDistance(compactAns, cand) === 1) {
         return 0.5;
       }
     }
@@ -293,7 +340,10 @@ function scoreMathSection(section, rawAnswer) {
   const recallAnswers = ans.recallAnswers && typeof ans.recallAnswers === "object" ? ans.recallAnswers : {};
 
   let recall = 0;
-  if (Array.isArray(section.recallQuestions)) {
+  let comp = 0;
+  const hasRecallQuestions = Array.isArray(section.recallQuestions) && section.recallQuestions.length > 0;
+
+  if (hasRecallQuestions) {
     for (const q of section.recallQuestions) {
       if (recallAnswers[q.id] === q.correctId) {
         recall += Number(q.points) || 0;
@@ -301,17 +351,23 @@ function scoreMathSection(section, rawAnswer) {
     }
   }
 
-  let comp = 0;
   const app = section.applicationProblem;
   if (app) {
-    const interVal = parseNumericAnswer(ans.intermediate);
-    if (!Number.isNaN(interVal) && Math.abs(interVal - Number(app.expectedIntermediate)) <= 0.01) {
-      comp += Number(app.intermediatePoints) || 0;
+    if (hasRecallQuestions && app.expectedIntermediate !== undefined) {
+      const interVal = parseNumericAnswer(ans.intermediate);
+      if (!Number.isNaN(interVal) && Math.abs(interVal - Number(app.expectedIntermediate)) <= 0.01) {
+        comp += Number(app.intermediatePoints) || 0;
+      }
     }
     const finalVal = parseNumericAnswer(ans.final);
     const tol = Number(app.tolerance ?? 0.01);
     if (!Number.isNaN(finalVal) && Math.abs(finalVal - Number(app.expectedNumeric)) <= tol) {
-      comp += Number(app.finalPoints) || 0;
+      if (!hasRecallQuestions && (app.recallPoints !== undefined || app.compPoints !== undefined)) {
+        recall += Number(app.recallPoints ?? section.maxRecallPoints ?? 0);
+        comp += Number(app.compPoints ?? section.maxComprehensionPoints ?? 0);
+      } else {
+        comp += Number(app.finalPoints) || 0;
+      }
     }
   }
 
@@ -342,8 +398,8 @@ function scoreDatesSection(section, rawAnswer) {
     const entry = answersMap[item.id] && typeof answersMap[item.id] === "object"
       ? answersMap[item.id]
       : {};
-    const yearStr = String(entry.year ?? "").trim();
-    if (/^\d+$/.test(yearStr) && parseInt(yearStr, 10) === Number(item.year)) {
+    const yearStr = String(entry.year ?? "").replace(/[\s.,;:\-]+/g, "").trim();
+    if (/^\d{4}$/.test(yearStr) && parseInt(yearStr, 10) === Number(item.year)) {
       recall += Number(item.yearPoints) || 0;
     }
     if (entry.detailChoiceId && entry.detailChoiceId === item.correctDetailId) {

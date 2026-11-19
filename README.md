@@ -2,7 +2,7 @@
 
 Applicazione statica HTML/CSS/JS (zero build step, pronta per **GitHub Pages** + **Neon Postgres**) composta da due interfacce:
 
-1. **App Partecipanti Smartphone** ([`index.html`](./index.html)): somministra Test A (iniziale a freddo), Test B (parallelo post-tecniche) e Round 3 (ritest post-pausa) con timer automatico sezione per sezione, protezione anti-reload e auto-correzione istantanea (`88 Ricordo + 12 Comprensione = 100`).
+1. **App Partecipanti Smartphone** ([`index.html`](./index.html)): somministra le 3 prove separate (`study` memorizzazione → `recall` recupero 1 → `recall` recupero 2, oppure `full` in un solo blocco) con timer indipendente sezione per sezione, lavagnetta chimica a recupero libero, 12 vocaboli (30s ciascuno) raggruppati per lingua in verifica, zero suggerimenti e auto-correzione tollerante su spazi/maiuscole (`82 Ricordo + 10 Comprensione = 92 pt`).
 2. **Regia Live Proiettabile** ([`dashboard.html`](./dashboard.html)): console per il formatore protetta da PIN con dati live per categoria, confronto Round `1 → 2 → 3`, dettaglio sulle 6 prove (incluso `Vocaboli nuovi appresi`), generatore QR Code inline proiettabile a tutto schermo ed export CSV.
 
 ---
@@ -44,12 +44,12 @@ Poi apri nel browser:
 | `session` | Testo (es. `SERATA-1`) | `APP_CONFIG.defaultSession` | Codice identificativo della serata |
 | `test` | `A` \| `B` | `A` | Batteria da somministrare (`test_A.json` o `test_B.json`) |
 | `round` | `1` \| `2` \| `3` | `1` | Numero del round nella serata |
-| `mode` | `full` \| `recall` | `full` | `full`: Studio + Risposta; `recall`: salta lo studio (usato per il Ritest post-pausa) |
+| `mode` | `study` \| `recall` \| `full` | `full` | `study`: solo memorizzazione (Prova 1); `recall`: solo recupero senza nuovo studio (Prova 2 e 3); `full`: studio + recupero |
 
-Esempi tipici della serata:
-1. **Round 1 (a freddo):** `?session=SERATA-1&test=A&round=1&mode=full`
-2. **Round 2 (post-tecniche):** `?session=SERATA-1&test=B&round=2&mode=full`
-3. **Round 3 (ritest post-pausa):** `?session=SERATA-1&test=B&round=3&mode=recall`
+Esempi tipici della serata (3 prove separate sullo stesso materiale):
+1. **Prova 1 (solo memorizzazione):** `?session=SERATA-1&test=A&round=1&mode=study`
+2. **Prova 2 (primo recupero, senza studio):** `?session=SERATA-1&test=A&round=2&mode=recall`
+3. **Prova 3 (secondo recupero, senza studio):** `?session=SERATA-1&test=A&round=3&mode=recall`
 
 ---
 

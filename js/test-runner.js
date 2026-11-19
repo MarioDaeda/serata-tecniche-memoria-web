@@ -70,7 +70,7 @@ function parseQueryParams() {
   const round = parsedRound === 1 || parsedRound === 2 || parsedRound === 3 ? parsedRound : 1;
 
   const rawMode = (params.get("mode") || "full").trim().toLowerCase();
-  const mode = rawMode === "recall" ? "recall" : "full";
+  const mode = rawMode === "recall" ? "recall" : rawMode === "study" ? "study" : "full";
 
   return { session, test, round, mode };
 }
@@ -109,10 +109,25 @@ function ensureSectionAnswerContainer(section) {
       break;
     }
     case "chemistry": {
-      if (!existing || typeof existing !== "object") {
-        ctx.attempt.answers[section.id] = { variantId: null, detailAnswers: {} };
-      } else if (!existing.detailAnswers || typeof existing.detailAnswers !== "object") {
-        existing.detailAnswers = {};
+      if (section.mode === "free_draw_selfcheck" || (!section.variantQuestion && !Array.isArray(section.detailQuestions))) {
+        if (!existing || typeof existing !== "object") {
+          ctx.attempt.answers[section.id] = {
+            subPhase: "draw",
+            drawingDataUrl: "",
+            usedPaper: false,
+            selfEval: null
+          };
+        } else {
+          if (existing.subPhase !== "selfcheck") existing.subPhase = "draw";
+          if (typeof existing.drawingDataUrl !== "string") existing.drawingDataUrl = "";
+          existing.usedPaper = Boolean(existing.usedPaper);
+        }
+      } else {
+        if (!existing || typeof existing !== "object") {
+          ctx.attempt.answers[section.id] = { variantId: null, detailAnswers: {} };
+        } else if (!existing.detailAnswers || typeof existing.detailAnswers !== "object") {
+          existing.detailAnswers = {};
+        }
       }
       break;
     }
@@ -153,16 +168,25 @@ function ensureSectionAnswerContainer(section) {
   return ctx.attempt.answers[section.id];
 }
 
+function isChemistrySelfCheckActive(section, phase) {
+  if (phase !== "recall" || !section || section.type !== "chemistry") return false;
+  if (section.mode !== "free_draw_selfcheck" && (section.variantQuestion || Array.isArray(section.detailQuestions))) {
+    return false;
+  }
+  return ctx?.attempt?.answers?.[section.id]?.subPhase === "selfcheck";
+}
+
 function renderTopBar(section, phase) {
   const { enabledSections, attempt } = ctx;
   const total = enabledSections.length;
   const currentNum = attempt.sectionIndex + 1;
-  const phaseLabel = phase === "study" ? "Studio" : "Risposta";
-  const remainingMs = Math.max(0, (attempt.phaseEndsAt || Date.now()) - Date.now());
+  const inSelfCheck = isChemistrySelfCheckActive(section, phase);
+  const phaseLabel = phase === "study" ? "Memorizzazione" : inSelfCheck ? "Confronto" : "Recupero";
+  const remainingMs = inSelfCheck ? 0 : Math.max(0, (attempt.phaseEndsAt || Date.now()) - Date.now());
   const durationSec = phase === "study" ? section.studySeconds : section.recallSeconds;
   const totalMs = Math.max(1000, (Number(durationSec) || 120) * 1000);
-  const pctLeft = Math.max(0, Math.min(100, (remainingMs / totalMs) * 100));
-  const isUrgent = remainingMs > 0 && remainingMs <= 15000;
+  const pctLeft = inSelfCheck ? 0 : Math.max(0, Math.min(100, (remainingMs / totalMs) * 100));
+  const isUrgent = !inSelfCheck && remainingMs > 0 && remainingMs <= 15000;
 
   const dotsHtml = enabledSections
     .map((_, idx) => {
@@ -184,8 +208,8 @@ function renderTopBar(section, phase) {
           <span aria-hidden="true">·</span>
           <span class="phase-badge ${phase}">${phaseLabel}</span>
         </div>
-        <div id="phase-timer" class="timer-pill ${isUrgent ? "urgent" : ""}" aria-label="Tempo rimanente">
-          ${formatTimer(remainingMs)}
+        <div id="phase-timer" class="timer-pill ${isUrgent ? "urgent" : ""}" aria-label="${inSelfCheck ? "Fase confronto" : "Tempo rimanente"}">
+          ${inSelfCheck ? "Confronto" : formatTimer(remainingMs)}
         </div>
       </div>
       <div class="topbar-title">${escapeHtml(section.title)}</div>
@@ -203,11 +227,18 @@ function renderTopBar(section, phase) {
 
 function startPhaseTimer(section, phase) {
   clearPhaseTimer();
+  if (isChemistrySelfCheckActive(section, phase)) {
+    return;
+  }
   const durationSec = phase === "study" ? section.studySeconds : section.recallSeconds;
   const totalMs = Math.max(1000, (Number(durationSec) || 120) * 1000);
 
   const updateTick = () => {
     if (!ctx || ctx.attempt.phase !== phase) {
+      clearPhaseTimer();
+      return;
+    }
+    if (isChemistrySelfCheckActive(section, phase)) {
       clearPhaseTimer();
       return;
     }
@@ -248,11 +279,41 @@ function startPhaseTimer(section, phase) {
   timerIntervalId = setInterval(updateTick, 250);
 }
 
+function captureChemCanvasSnapshot(section) {
+  if (!section || section.type !== "chemistry") return;
+  const canvas = document.getElementById("chem-canvas");
+  if (!canvas || !ctx?.attempt?.answers?.[section.id]) return;
+  const chemAns = ctx.attempt.answers[section.id];
+  if (canvas.dataset.hasInk === "true") {
+    try {
+      chemAns.drawingDataUrl = canvas.toDataURL("image/png");
+    } catch {
+      // ignore canvas export failure
+    }
+  }
+}
+
 function handlePhaseTimeout() {
   if (isAdvancing || !ctx) return;
   isAdvancing = true;
   try {
     const now = Date.now();
+    const currentSec = getCurrentSection();
+    if (
+      ctx.attempt.phase === "recall" &&
+      currentSec?.type === "chemistry" &&
+      (currentSec.mode === "free_draw_selfcheck" || (!currentSec.variantQuestion && !Array.isArray(currentSec.detailQuestions)))
+    ) {
+      const chemAns = ensureSectionAnswerContainer(currentSec);
+      if (chemAns.subPhase !== "selfcheck") {
+        captureChemCanvasSnapshot(currentSec);
+        chemAns.subPhase = "selfcheck";
+        persistAttempt();
+        renderRecallView(currentSec);
+        return;
+      }
+    }
+
     const elapsedPastEnd = now - (ctx.attempt.phaseEndsAt || now);
 
     if (elapsedPastEnd >= 5000) {
@@ -281,6 +342,22 @@ function advanceToNextPhase(now = Date.now()) {
   const currentSec = enabledSections[attempt.sectionIndex];
 
   if (attempt.phase === "study" && currentSec) {
+    if (mode === "study") {
+      const nextIdx = attempt.sectionIndex + 1;
+      if (nextIdx >= enabledSections.length) {
+        finalizeAttempt();
+        return;
+      }
+      const nextSec = enabledSections[nextIdx];
+      attempt.sectionIndex = nextIdx;
+      attempt.phase = "study";
+      attempt.phaseStartedAt = now;
+      attempt.phaseEndsAt = now + (Number(nextSec.studySeconds) || 120) * 1000;
+      persistAttempt();
+      renderCurrentView();
+      return;
+    }
+
     attempt.phase = "recall";
     attempt.phaseStartedAt = now;
     attempt.phaseEndsAt = now + (Number(currentSec.recallSeconds) || 120) * 1000;
@@ -319,7 +396,9 @@ function renderOnboarding() {
   const totalSecCount = enabledSections.length;
   const modeBadge =
     mode === "recall"
-      ? `<span class="chip chip-recall-mode">Solo Risposta (Ritest)</span>`
+      ? `<span class="chip chip-recall-mode">Solo Recupero</span>`
+      : mode === "study"
+      ? `<span class="chip chip-primary">Solo Memorizzazione (Prova 1)</span>`
       : `<span class="chip chip-primary">Studio + Risposta</span>`;
 
   const syncBadge = demo
@@ -343,8 +422,10 @@ function renderOnboarding() {
 
   const instructionsText =
     mode === "recall"
-      ? `Affronterai ${totalSecCount} prove in modalità Solo Risposta: nessun foglio di studio verrà mostrato, compilerai direttamente ciò che ricordi entro il tempo limite di ogni prova.`
-      : `Affronterai ${totalSecCount} prove cronometrate. In ogni prova avrai prima la fase di Studio e poi la fase di Risposta. Allo scadere del timer si passa automaticamente avanti e non è possibile tornare indietro allo stimolo.`;
+      ? `Affronterai ${totalSecCount} prove in modalità Solo Recupero: nessuno stimolo verrà mostrato, scriverai direttamente ciò che ricordi dalla memoria entro il tempo di ogni prova.`
+      : mode === "study"
+      ? `Affronterai ${totalSecCount} sezioni di pura memorizzazione con timer indipendente. Non dovrai riscrivere nulla subito: il recupero verrà verificato nelle prove successive.`
+      : `Affronterai ${totalSecCount} prove cronometrate. In ogni prova avrai prima la fase di Memorizzazione e poi la fase di Recupero. Allo scadere del timer si passa automaticamente avanti.`;
 
   rootEl.innerHTML = `
     <section class="card stack-md">
@@ -542,6 +623,18 @@ function renderStudyView(section) {
     bodyHtml = `<div class="stack-sm">${cardsHtml}</div>`;
   }
 
+  const isLastStudy = ctx.attempt.sectionIndex === ctx.enabledSections.length - 1;
+  const studyBtnLabel =
+    ctx.mode === "study"
+      ? isLastStudy
+        ? "Completa memorizzazione ✓"
+        : "Prossima sezione →"
+      : "Passa alle risposte →";
+  const studyHintText =
+    ctx.mode === "study"
+      ? "Una volta passato alla sezione successiva non potrai più tornare indietro allo stimolo."
+      : "Una volta passato alle risposte non potrai più rivedere lo stimolo.";
+
   rootEl.innerHTML = `
     ${renderTopBar(section, "study")}
     <div class="instruction-banner study">
@@ -550,9 +643,9 @@ function renderStudyView(section) {
     ${bodyHtml}
     <div class="phase-footer">
       <button type="button" id="finish-study-btn" class="btn btn-primary btn-block">
-        Passa alle risposte →
+        ${studyBtnLabel}
       </button>
-      <p class="footer-hint">Una volta passato alle risposte non potrai più rivedere lo stimolo.</p>
+      <p class="footer-hint">${studyHintText}</p>
     </div>
   `;
 
@@ -715,6 +808,103 @@ function wireDigitsRecall(section, answers) {
 }
 
 function renderChemistryRecall(section, answers) {
+  const isFreeDraw =
+    section.mode === "free_draw_selfcheck" ||
+    (!section.variantQuestion && !Array.isArray(section.detailQuestions));
+
+  if (isFreeDraw) {
+    if (answers.subPhase === "selfcheck") {
+      const userDrawingHtml = answers.drawingDataUrl
+        ? `
+          <div class="chem-compare-panel">
+            <span class="field-label">Il tuo disegno</span>
+            <div class="chem-svg-frame">
+              <img src="${answers.drawingDataUrl}" alt="Il tuo disegno" class="chem-study-img" />
+            </div>
+          </div>
+        `
+        : `
+          <div class="chem-compare-panel">
+            <span class="field-label">Il tuo disegno</span>
+            <div class="notice-box">Confronta il disegno che hai tracciato su carta con la struttura ufficiale qui sotto.</div>
+          </div>
+        `;
+
+      return `
+        <div class="card stack-md">
+          <div class="chem-header" style="margin-bottom: 0;">
+            <h2 class="chem-name">${escapeHtml(section.moleculeName || "Struttura chimica")}</h2>
+            ${section.formula ? `<span class="chem-formula">${escapeHtml(section.formula)}</span>` : ""}
+          </div>
+
+          ${userDrawingHtml}
+
+          <div class="chem-compare-panel">
+            <span class="field-label">Struttura corretta di riferimento</span>
+            <div class="chem-svg-frame">
+              <img
+                src="./${escapeHtml(section.studySvgPath || "")}"
+                alt="${escapeHtml(section.moleculeName || "Formula corretta")}"
+                class="chem-study-img"
+              />
+            </div>
+            ${
+              section.selfCheckCriteria
+                ? `<p class="helper-text" style="margin-top: 8px;">${escapeHtml(section.selfCheckCriteria)}</p>`
+                : ""
+            }
+          </div>
+
+          <div class="chem-eval-prompt">
+            <p class="question-prompt" style="margin-bottom: 10px;">La struttura che hai disegnato è corretta?</p>
+            <div class="chem-eval-actions">
+              <button type="button" id="chem-eval-correct" class="btn btn-eval-correct" data-self-eval="correct">
+                ✓ Corretta
+              </button>
+              <button type="button" id="chem-eval-wrong" class="btn btn-eval-wrong" data-self-eval="wrong">
+                ✗ Errata
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Step A: draw freely with ZERO reference SVG in DOM
+    return `
+      <div class="card stack-sm">
+        <div class="chem-header" style="margin-bottom: 4px;">
+          <h2 class="chem-name">${escapeHtml(section.moleculeName || "Struttura chimica")}</h2>
+        </div>
+        <p class="helper-text">
+          Traccia liberamente la struttura sul riquadro qui sotto con il dito (oppure su un foglio di carta). Nessun aiuto verrà mostrato finché non premi «Ho finito il disegno».
+        </p>
+
+        <div class="chem-canvas-wrap">
+          <canvas id="chem-canvas" class="chem-canvas" aria-label="Lavagnetta disegno struttura chimica"></canvas>
+        </div>
+
+        <div class="chem-canvas-tools">
+          <button type="button" id="chem-undo-btn" class="btn btn-secondary">Annulla tratto</button>
+          <button type="button" id="chem-clear-btn" class="btn btn-secondary">Pulisci</button>
+        </div>
+
+        <label class="known-toggle ${answers.usedPaper ? "checked" : ""}" style="justify-content: center;">
+          <input
+            type="checkbox"
+            id="chem-paper-checkbox"
+            ${answers.usedPaper ? "checked" : ""}
+          />
+          <span>Sto disegnando su un foglio di carta</span>
+        </label>
+
+        <button type="button" id="chem-finish-draw-btn" class="btn btn-recall-action btn-block" style="margin-top: 6px;">
+          Ho finito il disegno → Confronta
+        </button>
+      </div>
+    `;
+  }
+
   const vq = section.variantQuestion || { prompt: "", options: [] };
   const optionsHtml = (vq.options || [])
     .map((opt) => {
@@ -778,7 +968,147 @@ function renderChemistryRecall(section, answers) {
   `;
 }
 
-function wireChemistryRecall(answers) {
+function wireChemistryRecall(section, answers) {
+  const isFreeDraw =
+    section.mode === "free_draw_selfcheck" ||
+    (!section.variantQuestion && !Array.isArray(section.detailQuestions));
+
+  if (isFreeDraw) {
+    if (answers.subPhase === "selfcheck") {
+      const evalButtons = Array.from(rootEl.querySelectorAll("[data-self-eval]"));
+      evalButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (isAdvancing) return;
+          isAdvancing = true;
+          try {
+            answers.selfEval = btn.getAttribute("data-self-eval") === "correct" ? "correct" : "wrong";
+            persistAttempt();
+            clearPhaseTimer();
+            advanceToNextPhase(Date.now());
+          } finally {
+            isAdvancing = false;
+          }
+        });
+      });
+      return;
+    }
+
+    const canvas = document.getElementById("chem-canvas");
+    const undoBtn = document.getElementById("chem-undo-btn");
+    const clearBtn = document.getElementById("chem-clear-btn");
+    const paperCb = document.getElementById("chem-paper-checkbox");
+    const finishBtn = document.getElementById("chem-finish-draw-btn");
+
+    const strokes = [];
+    let activeStroke = null;
+    let canvasCtx = null;
+    let logicalW = 320;
+    let logicalH = 220;
+
+    const redrawCanvas = () => {
+      if (!canvasCtx) return;
+      canvasCtx.fillStyle = "#ffffff";
+      canvasCtx.fillRect(0, 0, logicalW, logicalH);
+      canvasCtx.strokeStyle = "#182230";
+      canvasCtx.lineWidth = 2.6;
+      canvasCtx.lineCap = "round";
+      canvasCtx.lineJoin = "round";
+      for (const stroke of strokes) {
+        if (!stroke.length) continue;
+        canvasCtx.beginPath();
+        canvasCtx.moveTo(stroke[0].x, stroke[0].y);
+        if (stroke.length === 1) {
+          canvasCtx.lineTo(stroke[0].x + 0.1, stroke[0].y + 0.1);
+        } else {
+          for (let i = 1; i < stroke.length; i += 1) {
+            canvasCtx.lineTo(stroke[i].x, stroke[i].y);
+          }
+        }
+        canvasCtx.stroke();
+      }
+      if (canvas) {
+        canvas.dataset.hasInk = strokes.length > 0 ? "true" : "false";
+      }
+    };
+
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect();
+      logicalW = Math.max(260, Math.round(rect.width || 320));
+      logicalH = Math.max(200, Math.round(rect.height || 230));
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = logicalW * dpr;
+      canvas.height = logicalH * dpr;
+      canvasCtx = canvas.getContext("2d");
+      if (canvasCtx) {
+        canvasCtx.scale(dpr, dpr);
+        redrawCanvas();
+      }
+
+      const getPos = (e) => {
+        const r = canvas.getBoundingClientRect();
+        return {
+          x: ((e.clientX - r.left) / Math.max(1, r.width)) * logicalW,
+          y: ((e.clientY - r.top) / Math.max(1, r.height)) * logicalH
+        };
+      };
+
+      canvas.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        canvas.setPointerCapture?.(e.pointerId);
+        activeStroke = [getPos(e)];
+        strokes.push(activeStroke);
+        redrawCanvas();
+      });
+
+      canvas.addEventListener("pointermove", (e) => {
+        if (!activeStroke) return;
+        e.preventDefault();
+        activeStroke.push(getPos(e));
+        redrawCanvas();
+      });
+
+      const endStroke = () => {
+        activeStroke = null;
+      };
+      canvas.addEventListener("pointerup", endStroke);
+      canvas.addEventListener("pointercancel", endStroke);
+    }
+
+    undoBtn?.addEventListener("click", () => {
+      strokes.pop();
+      redrawCanvas();
+    });
+
+    clearBtn?.addEventListener("click", () => {
+      strokes.length = 0;
+      answers.drawingDataUrl = "";
+      redrawCanvas();
+      persistAttempt();
+    });
+
+    paperCb?.addEventListener("change", () => {
+      answers.usedPaper = paperCb.checked;
+      paperCb.closest(".known-toggle")?.classList.toggle("checked", paperCb.checked);
+      persistAttempt();
+    });
+
+    finishBtn?.addEventListener("click", () => {
+      if (isAdvancing) return;
+      isAdvancing = true;
+      try {
+        clearPhaseTimer();
+        captureChemCanvasSnapshot(section);
+        answers.subPhase = "selfcheck";
+        persistAttempt();
+        renderRecallView(section);
+      } finally {
+        isAdvancing = false;
+      }
+    });
+
+    return;
+  }
+
   const optionBtns = Array.from(rootEl.querySelectorAll(".chem-option-card"));
   optionBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -842,6 +1172,42 @@ function wireWordsRecall(answers) {
   });
 }
 
+function renderVocabCard(item, idx, answers) {
+  const entry = answers[item.id] || { answer: "", alreadyKnown: false };
+  const langKey = String(item.language || "").toLowerCase();
+  return `
+    <div class="vocab-recall-card">
+      <div class="vocab-recall-head">
+        <div>
+          <span class="lang-pill lang-${escapeHtml(langKey)}">${escapeHtml(item.language)}</span>
+          <div class="vocab-prompt-word">${idx + 1}. ${escapeHtml(item.italian)}</div>
+        </div>
+        <label class="known-toggle ${entry.alreadyKnown ? "checked" : ""}">
+          <input
+            type="checkbox"
+            class="vocab-known-checkbox"
+            data-vocab-id="${escapeHtml(item.id)}"
+            ${entry.alreadyKnown ? "checked" : ""}
+          />
+          <span>Già nota</span>
+        </label>
+      </div>
+      <input
+        type="text"
+        class="text-input vocab-answer-input"
+        data-vocab-id="${escapeHtml(item.id)}"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="none"
+        spellcheck="false"
+        placeholder="Scrivi in ${escapeHtml(item.language)}…"
+        aria-label="${escapeHtml(item.italian)} in ${escapeHtml(item.language)}"
+        value="${escapeHtml(entry.answer || "")}"
+      />
+    </div>
+  `;
+}
+
 function renderVocabRecall(section, answers) {
   const items = Array.isArray(section.items) ? section.items : [];
   const itemById = new Map(items.map((item) => [item.id, item]));
@@ -851,50 +1217,48 @@ function renderVocabRecall(section, answers) {
       : items.map((item) => item.id);
 
   const orderedItems = orderIds.map((id) => itemById.get(id)).filter(Boolean);
+  let bodyHtml = "";
 
-  const cardsHtml = orderedItems
-    .map((item, idx) => {
-      const entry = answers[item.id] || { answer: "", alreadyKnown: false };
-      const langKey = String(item.language || "").toLowerCase();
-      return `
-        <div class="vocab-recall-card">
-          <div class="vocab-recall-head">
-            <div>
-              <span class="lang-pill lang-${escapeHtml(langKey)}">${escapeHtml(item.language)}</span>
-              <div class="vocab-prompt-word">${idx + 1}. ${escapeHtml(item.italian)}</div>
-            </div>
-            <label class="known-toggle ${entry.alreadyKnown ? "checked" : ""}">
-              <input
-                type="checkbox"
-                class="vocab-known-checkbox"
-                data-vocab-id="${escapeHtml(item.id)}"
-                ${entry.alreadyKnown ? "checked" : ""}
-              />
-              <span>Già nota</span>
-            </label>
+  if (section.groupByLanguageInRecall) {
+    const groups = new Map();
+    for (const item of orderedItems) {
+      const lang = String(item.language || "Altro");
+      if (!groups.has(lang)) groups.set(lang, []);
+      groups.get(lang).push(item);
+    }
+
+    let runningIdx = 0;
+    const sectionsHtml = [];
+    for (const [lang, groupItems] of groups.entries()) {
+      const langKey = lang.toLowerCase();
+      const cardsHtml = groupItems
+        .map((item) => {
+          const card = renderVocabCard(item, runningIdx, answers);
+          runningIdx += 1;
+          return card;
+        })
+        .join("");
+
+      sectionsHtml.push(`
+        <div class="vocab-lang-group">
+          <div class="vocab-lang-group-head">
+            <span class="lang-pill lang-${escapeHtml(langKey)}">${escapeHtml(lang)}</span>
+            <span class="helper-text">${groupItems.length} vocaboli</span>
           </div>
-          <input
-            type="text"
-            class="text-input vocab-answer-input"
-            data-vocab-id="${escapeHtml(item.id)}"
-            autocomplete="off"
-            autocorrect="off"
-            autocapitalize="none"
-            spellcheck="false"
-            placeholder="Scrivi in ${escapeHtml(item.language)}…"
-            aria-label="${escapeHtml(item.italian)} in ${escapeHtml(item.language)}"
-            value="${escapeHtml(entry.answer || "")}"
-          />
+          ${cardsHtml}
         </div>
-      `;
-    })
-    .join("");
+      `);
+    }
+    bodyHtml = sectionsHtml.join("");
+  } else {
+    bodyHtml = orderedItems.map((item, idx) => renderVocabCard(item, idx, answers)).join("");
+  }
 
   return `
     <div class="notice-box" style="margin-bottom: 12px;">
       Spunta <strong>Già nota</strong> se conoscevi già il vocabolo prima del test (serve a misurare i vocaboli nuovi appresi).
     </div>
-    <div>${cardsHtml}</div>
+    <div>${bodyHtml}</div>
   `;
 }
 
@@ -926,7 +1290,8 @@ function wireVocabRecall(answers) {
 }
 
 function renderMathRecall(section, answers) {
-  const recallHtml = (section.recallQuestions || [])
+  const recallQuestions = Array.isArray(section.recallQuestions) ? section.recallQuestions : [];
+  const recallHtml = recallQuestions
     .map((q, qIdx) => {
       const picked = answers.recallAnswers?.[q.id] || "";
       const choicesHtml = (q.choices || [])
@@ -957,26 +1322,31 @@ function renderMathRecall(section, answers) {
     .join("");
 
   const app = section.applicationProblem || {};
+  const intermediateHtml =
+    app.intermediatePrompt
+      ? `
+        <div>
+          <label class="field-label" for="math-intermediate-input">
+            ${escapeHtml(app.intermediatePrompt)}
+          </label>
+          <input
+            id="math-intermediate-input"
+            class="text-input"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            placeholder="Inserisci un numero"
+            value="${escapeHtml(answers.intermediate || "")}"
+          />
+        </div>
+      `
+      : "";
+
   const appHtml = `
     <div class="math-app-card stack-sm">
-      <p class="question-prompt" style="margin-bottom: 2px;">Esercizio applicativo</p>
+      <p class="question-prompt" style="margin-bottom: 2px;">Applicazione della formula memorizzata</p>
       <p class="helper-text" style="color: var(--text); font-weight: 600;">${escapeHtml(app.promptText || "")}</p>
-
-      <div>
-        <label class="field-label" for="math-intermediate-input">
-          ${escapeHtml(app.intermediatePrompt || "Valore intermedio")}
-        </label>
-        <input
-          id="math-intermediate-input"
-          class="text-input"
-          type="text"
-          inputmode="decimal"
-          autocomplete="off"
-          placeholder="Inserisci un numero"
-          value="${escapeHtml(answers.intermediate || "")}"
-        />
-      </div>
-
+      ${intermediateHtml}
       <div>
         <label class="field-label" for="math-final-input">
           ${escapeHtml(app.finalPrompt || "Risultato finale")}
@@ -987,7 +1357,7 @@ function renderMathRecall(section, answers) {
           type="text"
           inputmode="decimal"
           autocomplete="off"
-          placeholder="Inserisci un numero"
+          placeholder="Scrivi il risultato"
           value="${escapeHtml(answers.final || "")}"
         />
       </div>
@@ -1070,7 +1440,7 @@ function renderDatesRecall(section, answers) {
               pattern="[0-9]*"
               maxlength="4"
               autocomplete="off"
-              placeholder="Es. 1709"
+              placeholder="AAAA"
               value="${escapeHtml(entry.year || "")}"
             />
           </div>
@@ -1144,17 +1514,27 @@ function renderRecallView(section) {
       bodyHtml = `<div class="card">Sezione non riconosciuta.</div>`;
   }
 
+  const isChemFreeDraw =
+    section.type === "chemistry" &&
+    (section.mode === "free_draw_selfcheck" || (!section.variantQuestion && !Array.isArray(section.detailQuestions)));
+
+  const footerHtml = isChemFreeDraw
+    ? ""
+    : `
+      <div class="phase-footer">
+        <button type="button" id="submit-section-btn" class="btn btn-recall-action btn-block">
+          ${isLast ? "Consegna il test e vedi il risultato ✓" : "Conferma e passa alla prova successiva →"}
+        </button>
+      </div>
+    `;
+
   rootEl.innerHTML = `
     ${renderTopBar(section, "recall")}
     <div class="instruction-banner recall">
       ${escapeHtml(section.instructionRecall || "Inserisci ciò che ricordi prima dello scadere del tempo.")}
     </div>
     ${bodyHtml}
-    <div class="phase-footer">
-      <button type="button" id="submit-section-btn" class="btn btn-recall-action btn-block">
-        ${isLast ? "Consegna il test e vedi il risultato ✓" : "Conferma e passa alla prova successiva →"}
-      </button>
-    </div>
+    ${footerHtml}
   `;
 
   window.scrollTo({ top: 0, behavior: "instant" });
@@ -1164,7 +1544,7 @@ function renderRecallView(section) {
       wireDigitsRecall(section, answers);
       break;
     case "chemistry":
-      wireChemistryRecall(answers);
+      wireChemistryRecall(section, answers);
       break;
     case "words":
       wireWordsRecall(answers);
@@ -1313,13 +1693,54 @@ function updateSubmissionBanner() {
   });
 }
 
+function renderCompletedStudyView() {
+  clearPhaseTimer();
+  const { session, test, round, enabledSections, attempt } = ctx;
+  const startedAt = attempt.testStartedAt || attempt.completedAt || Date.now();
+  const durationSeconds = Math.max(0, Math.round(((attempt.completedAt || Date.now()) - startedAt) / 1000));
+  const mins = Math.floor(durationSeconds / 60);
+  const secs = durationSeconds % 60;
+  const durationLabel = `${mins}m ${String(secs).padStart(2, "0")}s`;
+  const catLabel = CATEGORY_SHORT[attempt.participant?.category] || attempt.participant?.category || "";
+  const nick = attempt.participant?.nickname;
+
+  rootEl.innerHTML = `
+    <section class="card score-hero stack-md">
+      <div class="meta-chips" style="justify-content: center;">
+        <span class="chip chip-primary">Serata ${escapeHtml(session)}</span>
+        <span class="chip">Test ${escapeHtml(test)} · Prova ${round}</span>
+        <span class="chip chip-primary">Solo Memorizzazione</span>
+        ${catLabel ? `<span class="chip">${escapeHtml(catLabel)}</span>` : ""}
+        ${nick ? `<span class="chip">${escapeHtml(nick)}</span>` : ""}
+      </div>
+
+      <h1 class="hero-title" style="margin-top: 6px;">Memorizzazione completata! ✓</h1>
+      <p class="helper-text" style="font-size: 0.98rem;">
+        Hai completato tutte le ${enabledSections.length} sezioni di memorizzazione in <strong>${durationLabel}</strong>.
+      </p>
+
+      <div class="notice-box" style="text-align: left;">
+        Non devi scrivere altro adesso. Attendi il prossimo <strong>QR Code</strong> proiettato dallo speaker per la prova di recupero: il tuo profilo resta salvato su questo telefono.
+      </div>
+    </section>
+  `;
+
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
 function finalizeAttempt() {
   clearPhaseTimer();
   const now = Date.now();
-  const { attempt, testData } = ctx;
+  const { attempt, testData, mode } = ctx;
   const completedAt = attempt.completedAt || now;
   attempt.phase = "completed";
   attempt.completedAt = completedAt;
+
+  if (mode === "study") {
+    persistAttempt();
+    renderCompletedStudyView();
+    return;
+  }
 
   const scoreResult = scoreTest(testData, attempt.answers);
   const payload = buildPayload(scoreResult, completedAt);
@@ -1533,6 +1954,10 @@ function renderCurrentView() {
   }
 
   if (attempt.phase === "completed") {
+    if (ctx.mode === "study") {
+      renderCompletedStudyView();
+      return;
+    }
     renderCompletedView(attempt.submission?.scoreResult);
     return;
   }

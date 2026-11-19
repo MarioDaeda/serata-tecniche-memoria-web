@@ -723,6 +723,66 @@ body {
   color: var(--text);
 }
 
+.chem-canvas-wrap {
+  width: 100%;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.chem-canvas {
+  display: block;
+  width: 100%;
+  height: 230px;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.chem-canvas-tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.chem-compare-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chem-eval-prompt {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.chem-eval-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.btn-eval-correct {
+  background: var(--success);
+  color: #ffffff;
+  min-height: 50px;
+}
+
+.btn-eval-correct:hover:not(:disabled) {
+  background: #047857;
+}
+
+.btn-eval-wrong {
+  background: var(--danger);
+  color: #ffffff;
+  min-height: 50px;
+}
+
+.btn-eval-wrong:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
 /* Multiple choice questions */
 .question-card {
   background: var(--surface);
@@ -926,6 +986,20 @@ body {
   border-radius: var(--radius-md);
   padding: 13px;
   margin-bottom: 10px;
+}
+
+.vocab-lang-group {
+  margin-bottom: 16px;
+}
+
+.vocab-lang-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 2px 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
 }
 
 .vocab-recall-head {
