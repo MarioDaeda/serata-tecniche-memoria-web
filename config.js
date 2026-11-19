@@ -12,10 +12,10 @@
  *   (es. "https://mariodaeda.github.io/serata-tecniche-memoria-web/").
  */
 export const APP_CONFIG = {
-  neonDataApiUrl: "",
-  neonAuthUrl: "",
+  neonDataApiUrl: "https://ep-fragrant-surf-bauvhgu5.apirest.c-8.eu-central-1.aws.neon.tech/neondb/rest/v1",
+  neonAuthUrl: "https://ep-fragrant-surf-bauvhgu5.neonauth.c-8.eu-central-1.aws.neon.tech/neondb/auth",
   defaultSession: "SERATA-1",
   demoPin: "1234",
   dashboardRefreshMs: 4000,
-  appBaseUrl: ""
+  appBaseUrl: "https://mariodaeda.github.io/serata-tecniche-memoria-web/"
 };
